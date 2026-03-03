@@ -7,76 +7,133 @@
 <style>
 body {
     margin: 0;
-    padding: 0;
     overflow: hidden;
-    background: #f0f8ff;
     font-family: Arial, sans-serif;
-    text-align: center;
-}
-
-#gameCanvas {
-    background: #a0d8f0;
-    display: block;
-    margin: 0 auto;
+    background: black;
+    color: white;
 }
 
 #score {
-    color: #222;
+    position: absolute;
+    top: 10px;
+    left: 10px;
     font-size: 24px;
-    margin: 10px;
+    z-index: 10;
+}
+
+#bgCanvas {
+    position: absolute;
+    top:0;
+    left:0;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+}
+
+#gameCanvas {
+    position: absolute;
+    top:0;
+    left:0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+#teto {
+    position: absolute;
+    bottom: 20px;
+    width: 100px;
+    transition: transform 0.2s;
+    z-index: 2;
 }
 </style>
 </head>
 <body>
 
-<h1>Teto Rhythm Game</h1>
 <div id="score">Punti: 0</div>
-<canvas id="gameCanvas" width="600" height="400"></canvas>
-<img id="teto" src="teto.png" style="width:100px; position:absolute; bottom:10px; left:250px;">
+<canvas id="bgCanvas"></canvas>
+<canvas id="gameCanvas"></canvas>
+<img id="teto" src="immagine_2026-03-03_204259655.png" alt="Kasane Teto">
 
-<audio id="bgm" src="song.mp3"></audio>
-<button onclick="startGame()">Start!</button>
+<audio id="bgm" src="BIRDBRAIN.mp3"></audio>
+<button onclick="startGame()" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10;">Start!</button>
 
 <script>
+// --- Variabili ---
+const bgCanvas = document.getElementById("bgCanvas");
+const bgCtx = bgCanvas.getContext("2d");
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const teto = document.getElementById("teto");
 const bgm = document.getElementById("bgm");
+
 let notes = [];
 let score = 0;
 let gameRunning = false;
+let tetoX = window.innerWidth/2 - 50;
+let tetoDir = 1; // 1 = destra, -1 = sinistra
 
-// Inizia gioco
-function startGame() {
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+bgCanvas.width = window.innerWidth;
+bgCanvas.height = window.innerHeight;
+
+// --- Sfondo animato ---
+let stars = [];
+for(let i=0;i<100;i++){
+    stars.push({x:Math.random()*window.innerWidth, y:Math.random()*window.innerHeight, r: Math.random()*2, vy: Math.random()*0.5});
+}
+function animateBG(){
+    bgCtx.clearRect(0,0,bgCanvas.width,bgCanvas.height);
+    let gradient = bgCtx.createLinearGradient(0,0,0,bgCanvas.height);
+    gradient.addColorStop(0,'#0a0a0a');
+    gradient.addColorStop(1,'#111');
+    bgCtx.fillStyle = gradient;
+    bgCtx.fillRect(0,0,bgCanvas.width,bgCanvas.height);
+
+    bgCtx.fillStyle = 'white';
+    stars.forEach(s=>{
+        bgCtx.beginPath();
+        bgCtx.arc(s.x,s.y,s.r,0,Math.PI*2);
+        bgCtx.fill();
+        s.y += s.vy;
+        if(s.y>window.innerHeight){s.y=0;s.x=Math.random()*window.innerWidth;}
+    });
+    requestAnimationFrame(animateBG);
+}
+animateBG();
+
+// --- Funzioni gioco ---
+function startGame(){
     gameRunning = true;
     bgm.play();
     spawnNotes();
     requestAnimationFrame(gameLoop);
 }
 
-// Genera note ogni 1 secondo
-function spawnNotes() {
-    if (!gameRunning) return;
-    const x = Math.random() * (canvas.width - 30);
-    notes.push({x: x, y: 0, width: 30, height: 30});
-    setTimeout(spawnNotes, 1000);
+// Genera note
+function spawnNotes(){
+    if(!gameRunning) return;
+    const x = Math.random()*(canvas.width-30);
+    notes.push({x:x, y:0, width:30, height:30});
+    setTimeout(spawnNotes, 800);
 }
 
 // Disegna note
-function drawNotes() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "red";
-    notes.forEach(note => {
-        ctx.fillRect(note.x, note.y, note.width, note.height);
-        note.y += 2; // velocità
+function drawNotes(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle = 'red';
+    notes.forEach(note=>{
+        ctx.fillRect(note.x,note.y,note.width,note.height);
+        note.y += 4;
     });
 }
 
-// Controllo tasto barra spaziatrice
-document.addEventListener("keydown", function(e) {
-    if(e.code === "Space") {
-        notes.forEach((note, index) => {
-            if(note.y + note.height >= canvas.height - 50 && note.y <= canvas.height - 20) {
+// Controllo barra spaziatrice
+document.addEventListener("keydown", function(e){
+    if(e.code==="Space"){
+        notes.forEach((note,index)=>{
+            if(note.y + note.height >= canvas.height - 70 && note.y <= canvas.height - 40){
                 notes.splice(index,1);
                 score += 100;
                 document.getElementById("score").innerText = "Punti: " + score;
@@ -85,9 +142,20 @@ document.addEventListener("keydown", function(e) {
     }
 });
 
-function gameLoop() {
+// --- Animazione Teto ---
+function animateTeto(){
+    tetoX += tetoDir*3;
+    if(tetoX + 100 > window.innerWidth) tetoDir=-1;
+    if(tetoX < 0) tetoDir=1;
+    teto.style.left = tetoX + "px";
+    teto.style.transform = tetoDir===1 ? "scaleX(1)" : "scaleX(-1)";
+}
+
+// --- Loop principale ---
+function gameLoop(){
     if(!gameRunning) return;
     drawNotes();
+    animateTeto();
     requestAnimationFrame(gameLoop);
 }
 </script>
