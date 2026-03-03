@@ -3,56 +3,93 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Teto Fun</title>
-
+<title>Teto Rhythm Game</title>
 <style>
 body {
     margin: 0;
     padding: 0;
     overflow: hidden;
-    background: #f0f8ff; /* cielo azzurro */
-    height: 100vh;
+    background: #f0f8ff;
+    font-family: Arial, sans-serif;
+    text-align: center;
 }
 
-/* Immagine Kasane Teto */
-#teto {
-    position: absolute;
-    bottom: 20px;
-    width: 150px;
-    transition: transform 0.2s;
+#gameCanvas {
+    background: #a0d8f0;
+    display: block;
+    margin: 0 auto;
 }
 
-/* Animazione destra/sinistra */
+#score {
+    color: #222;
+    font-size: 24px;
+    margin: 10px;
+}
 </style>
 </head>
-
 <body>
 
-<img id="teto" src="teto.png" alt="Kasane Teto">
+<h1>Teto Rhythm Game</h1>
+<div id="score">Punti: 0</div>
+<canvas id="gameCanvas" width="600" height="400"></canvas>
+<img id="teto" src="teto.png" style="width:100px; position:absolute; bottom:10px; left:250px;">
+
+<audio id="bgm" src="song.mp3"></audio>
+<button onclick="startGame()">Start!</button>
 
 <script>
-// Posizione iniziale
-let teto = document.getElementById("teto");
-let posX = 0;
-let speed = 2;
-let direction = 1; // 1 = destra, -1 = sinistra
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+const teto = document.getElementById("teto");
+const bgm = document.getElementById("bgm");
+let notes = [];
+let score = 0;
+let gameRunning = false;
 
-function animateTeto() {
-    posX += speed * direction;
-    teto.style.left = posX + "px";
-
-    // Cambia direzione se raggiunge il bordo
-    if (posX + teto.width >= window.innerWidth) direction = -1;
-    if (posX <= 0) direction = 1;
-
-    // Ruota Teto per guardare la direzione
-    if (direction === 1) teto.style.transform = "scaleX(1)";
-    else teto.style.transform = "scaleX(-1)";
-
-    requestAnimationFrame(animateTeto);
+// Inizia gioco
+function startGame() {
+    gameRunning = true;
+    bgm.play();
+    spawnNotes();
+    requestAnimationFrame(gameLoop);
 }
 
-animateTeto();
+// Genera note ogni 1 secondo
+function spawnNotes() {
+    if (!gameRunning) return;
+    const x = Math.random() * (canvas.width - 30);
+    notes.push({x: x, y: 0, width: 30, height: 30});
+    setTimeout(spawnNotes, 1000);
+}
+
+// Disegna note
+function drawNotes() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "red";
+    notes.forEach(note => {
+        ctx.fillRect(note.x, note.y, note.width, note.height);
+        note.y += 2; // velocità
+    });
+}
+
+// Controllo tasto barra spaziatrice
+document.addEventListener("keydown", function(e) {
+    if(e.code === "Space") {
+        notes.forEach((note, index) => {
+            if(note.y + note.height >= canvas.height - 50 && note.y <= canvas.height - 20) {
+                notes.splice(index,1);
+                score += 100;
+                document.getElementById("score").innerText = "Punti: " + score;
+            }
+        });
+    }
+});
+
+function gameLoop() {
+    if(!gameRunning) return;
+    drawNotes();
+    requestAnimationFrame(gameLoop);
+}
 </script>
 
 </body>
