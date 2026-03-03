@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Teto Rhythm Kawaii</title>
+<title>Teto Rhythm Game</title>
 <style>
 body {
     margin: 0;
@@ -53,13 +53,18 @@ body {
 }
 
 button {
+    position: relative;
+    font-size: 18px;
+    padding: 10px 20px;
+    margin: 5px;
+    z-index: 10;
+}
+#menu {
     position: absolute;
     top:50%;
     left:50%;
     transform:translate(-50%,-50%);
-    z-index: 10;
-    font-size: 18px;
-    padding: 10px 20px;
+    z-index:10;
 }
 </style>
 </head>
@@ -71,14 +76,19 @@ button {
 <div id="hitLine"></div>
 <canvas id="gameCanvas"></canvas>
 
+<div id="menu">
+    <button id="startBtn">Start</button>
+    <button id="settingsBtn">Impostazioni</button>
+</div>
+
 <audio id="bgm" src="BIRDBRAIN.mp3"></audio>
-<button id="startBtn">Start!</button>
 
 <script>
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const bgm = document.getElementById("bgm");
 const startBtn = document.getElementById("startBtn");
+const settingsBtn = document.getElementById("settingsBtn");
 
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
@@ -87,24 +97,21 @@ let notes = []; // {time: secondi, x: posX, hit: false}
 let score = 0;
 let combo = 0;
 let gameRunning = false;
+let hitKey = "Space"; // default
 
-// --- Carica icona Teto per le note ---
-const tetoIcon = new Image();
-tetoIcon.src = 'immagine_2026-03-03_204259655.png'; // Puoi usare un PNG piccolo o ritagliato
-
-// --- Sincronizzazione note ---
+// --- Genera note ---
 const bpm = 140;
 const beatInterval = 60/bpm;
 const noteSpeed = 400;
 const totalBeats = 50;
 for(let i=0;i<totalBeats;i++){
     const time = i*beatInterval;
-    const x = Math.random()*(canvas.width-60)+30;
+    const x = Math.random()*(canvas.width-50)+25;
     notes.push({time:time, x:x, hit:false});
 }
 
 // --- Effetti luminosi ---
-let effects = []; // {x, y, alpha, radius}
+let effects = [];
 function drawEffects(){
     effects.forEach((e,index)=>{
         ctx.beginPath();
@@ -113,7 +120,7 @@ function drawEffects(){
         ctx.fill();
         e.alpha -= 0.02;
         e.radius += 1;
-        if(e.alpha <= 0) effects.splice(index,1);
+        if(e.alpha <=0) effects.splice(index,1);
     });
 }
 
@@ -121,7 +128,7 @@ function drawEffects(){
 function startGame(){
     if(gameRunning) return;
     gameRunning = true;
-    startBtn.style.display = "none";
+    document.getElementById("menu").style.display="none";
     bgm.currentTime = 0;
     bgm.play();
     requestAnimationFrame(gameLoop);
@@ -129,19 +136,33 @@ function startGame(){
 
 function drawNotes(currentTime){
     ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle = 'red';
     notes.forEach(note=>{
         if(note.hit) return;
         const y = (note.time - currentTime)*noteSpeed + (canvas.height-70);
-        if(y < 0) return;
-        ctx.drawImage(tetoIcon, note.x, y, 50, 50); // icona Teto
+        if(y<0) return;
+        // disegna cubo arrotondato
+        const size = 40;
+        const radius = 8;
+        ctx.beginPath();
+        ctx.moveTo(note.x + radius, y);
+        ctx.lineTo(note.x + size - radius, y);
+        ctx.quadraticCurveTo(note.x + size, y, note.x + size, y + radius);
+        ctx.lineTo(note.x + size, y + size - radius);
+        ctx.quadraticCurveTo(note.x + size, y + size, note.x + size - radius, y + size);
+        ctx.lineTo(note.x + radius, y + size);
+        ctx.quadraticCurveTo(note.x, y + size, note.x, y + size - radius);
+        ctx.lineTo(note.x, y + radius);
+        ctx.quadraticCurveTo(note.x, y, note.x + radius, y);
+        ctx.fill();
     });
     drawEffects();
 }
 
-// --- Controllo barra spaziatrice singolo colpo ---
+// --- Controllo tasto selezionabile ---
 let keyPressed = false;
 document.addEventListener("keydown", function(e){
-    if(e.code==="Space" && !keyPressed){
+    if(e.code===hitKey && !keyPressed){
         keyPressed = true;
         const currentTime = bgm.currentTime;
         let hit = false;
@@ -151,8 +172,7 @@ document.addEventListener("keydown", function(e){
             if(y >= canvas.height-90 && y <= canvas.height-50){
                 note.hit = true;
                 hit = true;
-                // aggiungi effetto luminoso
-                effects.push({x:note.x+25, y:y+25, alpha:1, radius:10});
+                effects.push({x:note.x+20, y:y+20, alpha:1, radius:10});
             }
         });
         if(hit){
@@ -166,7 +186,7 @@ document.addEventListener("keydown", function(e){
     }
 });
 document.addEventListener("keyup", function(e){
-    if(e.code==="Space") keyPressed = false;
+    if(e.code===hitKey) keyPressed = false;
 });
 
 // --- Loop principale ---
@@ -177,7 +197,14 @@ function gameLoop(){
     requestAnimationFrame(gameLoop);
 }
 
+// --- Start e Settings ---
 startBtn.addEventListener("click", startGame);
+
+settingsBtn.addEventListener("click", function(){
+    const newKey = prompt("Inserisci il tasto da usare (es. Space, KeyZ, KeyX):", hitKey);
+    if(newKey) hitKey = newKey;
+    alert("Tasto impostato su: " + hitKey);
+});
 </script>
 </body>
 </html>
