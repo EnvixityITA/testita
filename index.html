@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BIRDBRAIN Rhythm Ritardo Note</title>
+<title>BIRDBRAIN Rhythm Dal Basso</title>
 <style>
 body {margin:0;overflow:hidden;font-family:Arial;background:black;color:white;}
 #score,#combo{position:absolute;top:10px;font-size:24px;z-index:10;}
@@ -12,7 +12,7 @@ body {margin:0;overflow:hidden;font-family:Arial;background:black;color:white;}
 #bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-2;
     background:url('immagine_2026-03-03_204259655.png') center center/cover no-repeat;
     filter:brightness(0.3) blur(4px);
-    opacity:0; transition:opacity 1.5s ease-in;}
+    opacity:0; transition:opacity 2s ease-in;}
 #hitLine{
     position:absolute;
     bottom:70px;
@@ -60,8 +60,6 @@ let score=0;
 let combo=0;
 let gameRunning=false;
 let hitKey="Space";
-let effects=[];
-let particles=[];
 
 // --- Disegna note ---
 function drawNotes(currentTime){
@@ -69,8 +67,9 @@ function drawNotes(currentTime){
     ctx.fillStyle='red';
     notes.forEach(note=>{
         if(note.hit) return;
-        const y=(note.time-currentTime)*400; // note dall'alto
-        if(y > canvas.height) return;
+        // note dal basso verso l’alto
+        const y=canvas.height - (currentTime - note.time)*400; 
+        if(y < 0) return;
         const size=40,radius=8;
         ctx.beginPath();
         ctx.moveTo(note.x+radius,y);
@@ -84,32 +83,6 @@ function drawNotes(currentTime){
         ctx.quadraticCurveTo(note.x,y,note.x+radius,y);
         ctx.fill();
     });
-    drawEffects();
-    drawParticles();
-}
-
-function drawEffects(){
-    effects.forEach((e,i)=>{
-        ctx.beginPath();
-        ctx.arc(e.x,e.y,e.radius,0,Math.PI*2);
-        ctx.fillStyle=`rgba(${e.color.r},${e.color.g},${e.color.b},${e.alpha})`;
-        ctx.fill();
-        e.alpha-=0.03;
-        e.radius+=2;
-        if(e.alpha<=0) effects.splice(i,1);
-    });
-}
-
-function drawParticles(){
-    particles.forEach((p,i)=>{
-        ctx.beginPath();
-        ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
-        ctx.fillStyle=`rgba(${p.color.r},${p.color.g},${p.color.b},${p.alpha})`;
-        ctx.fill();
-        p.y -= p.vy;
-        p.alpha -= 0.02;
-        if(p.alpha <=0) particles.splice(i,1);
-    });
 }
 
 // --- Controllo tasto ---
@@ -121,20 +94,10 @@ document.addEventListener("keydown",e=>{
         let hit=false;
         notes.forEach(note=>{
             if(note.hit) return;
-            const y=(note.time-currentTime)*400;
+            const y=canvas.height - (currentTime - note.time)*400;
             if(y>=canvas.height-110 && y<=canvas.height-50){
                 note.hit=true;
                 hit=true;
-                // effetti luminosi multipli
-                for(let i=0;i<6;i++){
-                    effects.push({
-                        x:note.x+20,
-                        y:y+20,
-                        radius:5,
-                        alpha:1,
-                        color:{r:255,g:255,b:255}
-                    });
-                }
             }
         });
         if(hit){combo++; score+=100*combo;} else{combo=0;}
@@ -146,7 +109,7 @@ document.addEventListener("keyup",e=>{
     if(e.code===hitKey) keyPressed=false;
 });
 
-// --- Generazione note con cooldown ---
+// --- Generazione note ---
 let audioCtx, analyser, source, dataArray;
 let lastNoteTime=0;
 const NOTE_COOLDOWN=0.25;
@@ -170,7 +133,7 @@ function generateNotes(){
     const currentTime=bgm.currentTime;
     if(avg>50 && (currentTime - lastNoteTime) > NOTE_COOLDOWN){
         const x=Math.random()*(canvas.width-50)+25;
-        notes.push({x:x,hit:false,time:currentTime + (canvas.height-70)/400});
+        notes.push({x:x,hit:false,time:currentTime});
         lastNoteTime=currentTime;
     }
     requestAnimationFrame(generateNotes);
@@ -184,25 +147,25 @@ function gameLoop(){
     requestAnimationFrame(gameLoop);
 }
 
-// --- Start con ritardo note ---
+// --- Start ---
 startBtn.addEventListener("click",()=>{
     if(gameRunning) return;
     gameRunning=true;
     document.getElementById("menu").style.display="none";
     setupAudio();
 
-    // Cinematica iniziale
-    bg.style.opacity=0;
-    particles.push({x:canvas.width/2, y:canvas.height/2, size:60, vy:2, alpha:1, color:{r:255,g:255,b:100}});
+    // Fade-in dello sfondo
+    bg.style.opacity=1;
+
+    // Hit line fade-in
     setTimeout(()=>{
-        bg.style.opacity=1;
         hitLine.style.display="block";
         hitLine.style.opacity=1;
         bgm.currentTime=0;
         bgm.play();
-    },1500);
+    },500);
 
-    // Generazione note dopo 2 secondi
+    // Generazione note 2 secondi dopo
     setTimeout(()=>{
         generateNotes();
         requestAnimationFrame(gameLoop);
