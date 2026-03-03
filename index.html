@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BIRDBRAIN Rhythm - Funzionante</title>
+<title>Rhythm Game - Song Selector</title>
 <style>
 body {margin:0;overflow:hidden;font-family:Arial;background:black;color:white;}
 #score,#combo,#rank{position:absolute;top:10px;font-size:24px;z-index:10;}
@@ -12,150 +12,100 @@ body {margin:0;overflow:hidden;font-family:Arial;background:black;color:white;}
 #rank{left:400px;}
 #gameCanvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;}
 #bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-2;
-    background:url('immagine_2026-03-03_204259655.png') center center/cover no-repeat;
+    background:center center/cover no-repeat;
     filter:brightness(0.3) blur(4px);
-    opacity:0; transition:opacity 2s ease-in;}
-#hitLine{position:absolute;bottom:70px;left:0;width:100%;height:3px;background:rgba(255,255,255,0.5);z-index:5;opacity:0;transition:opacity 1.2s ease-in;}
-#accuracyBar{position:absolute;bottom:50px;left:50%;transform:translateX(-50%);width:300px;height:8px;background:rgba(255,255,255,0.2);border-radius:4px;overflow:hidden;z-index:5;}
-#accuracyFill{width:0%;height:100%;background:lime;transition:width 0.1s;}
+    opacity:0; transition:opacity 1s ease-in;}
+#hitLine{position:absolute;bottom:70px;left:0;width:100%;height:3px;background:rgba(255,255,255,0.5);z-index:5;opacity:0;}
 #menu{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10;text-align:center;}
-button{font-size:18px;padding:10px 20px;margin:5; cursor:pointer;}
-.columnLabel{position:absolute;bottom:30px;font-size:20px;color:rgba(255,255,255,0.7);width:100px;text-align:center;transform:translateX(-50%);pointer-events:none;}
-#keySettings{position:absolute;top:60px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);padding:10px 15px;border-radius:8px;display:none;z-index:20;}
-#keySettings table{border-collapse:collapse;}
-#keySettings td{border:1px solid rgba(255,255,255,0.3);padding:8px 15px;text-align:center;cursor:pointer;color:white;font-weight:bold;}
-#keySettings td:hover{background:rgba(255,255,255,0.2);}
+button, select{font-size:18px;padding:10px 20px;margin:5; cursor:pointer;}
 </style>
 </head>
 <body>
 
 <div id="bg"></div>
-<div id="score">Punti: 0</div>
-<div id="combo">Combo: 0x</div>
-<div id="rank">Rank: F</div>
-<div id="hitLine"></div>
-<div id="accuracyBar"><div id="accuracyFill"></div></div>
 <canvas id="gameCanvas"></canvas>
-
 <div id="menu">
+<select id="songSelector">
+  <option value="BIRDBRAIN">BIRDBRAIN</option>
+  <option value="Mesmerizer">Mesmerizer</option>
+</select>
+<br>
 <button id="startBtn">Start</button>
-<button id="settingsBtn">Impostazioni</button>
-<div id="keySettings">
-    <table>
-        <tr>
-            <td id="col0">D</td>
-            <td id="col1">F</td>
-            <td id="col2">J</td>
-            <td id="col3">K</td>
-        </tr>
-    </table>
-    <small>Clicca su un tasto per cambiarlo</small>
-</div>
 </div>
 
-<audio id="bgm" src="BIRDBRAIN.mp3" crossorigin="anonymous"></audio>
+<audio id="bgm" crossorigin="anonymous"></audio>
 
 <script>
-const canvas=document.getElementById("gameCanvas");
-const ctx=canvas.getContext("2d");
-const bgm=document.getElementById("bgm");
-const startBtn=document.getElementById("startBtn");
-const settingsBtn=document.getElementById("settingsBtn");
-const hitLine=document.getElementById("hitLine");
-const bg=document.getElementById("bg");
-const keySettings=document.getElementById("keySettings");
-const accuracyFill=document.getElementById("accuracyFill");
-const rankDisplay=document.getElementById("rank");
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+const bg = document.getElementById("bg");
+const bgm = document.getElementById("bgm");
+const startBtn = document.getElementById("startBtn");
+const songSelector = document.getElementById("songSelector");
 
-canvas.width=window.innerWidth;
-canvas.height=window.innerHeight;
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-let notes=[];
-let score=0, combo=0, gameRunning=false;
-let totalHits=0, totalPerfect=0;
+// --- Song data ---
+const songs = {
+    "BIRDBRAIN": {
+        mp3: "BIRDBRAIN.mp3",
+        bg: "immagine_2026-03-03_204259655.png",
+        notes: [
+            {time:0.5,column:0},{time:1,column:1},{time:1.5,column:2},{time:2,column:3},
+            {time:2.5,column:0},{time:3,column:1},{time:3.5,column:2},{time:4,column:3}
+        ]
+    },
+    "Mesmerizer": {
+        mp3: "mesmerizer.mp3",
+        bg: "immagine_2026-03-03_214702471.png",
+        notes: [
+            {time:0.3,column:0},{time:0.6,column:2},{time:1,column:1},{time:1.4,column:3},
+            {time:1.7,column:0},{time:2.1,column:2},{time:2.5,column:1},{time:2.8,column:3}
+        ]
+    }
+};
 
-const columns=4;
-let columnKeys=["D","F","J","K"];
-let columnCodes=["KeyD","KeyF","KeyJ","KeyK"];
-const columnWidth=canvas.width/columns;
-let noteSpeed=400, noteCooldown=0.25;
+let currentSong = songs[songSelector.value];
+let notes = [];
+let gameRunning = false;
 
-// --- Disegna note ---
+songSelector.addEventListener("change", () => {
+    currentSong = songs[songSelector.value];
+});
+
+startBtn.addEventListener("click", () => {
+    if(gameRunning) return;
+    notes = currentSong.notes.map(n => ({...n, hit:false}));
+    bg.style.backgroundImage = `url('${currentSong.bg}')`;
+    bg.style.opacity = 1;
+    bgm.src = currentSong.mp3;
+    bgm.currentTime = 0;
+    bgm.play();
+    gameRunning = true;
+    document.getElementById("menu").style.display = "none";
+    requestAnimationFrame(gameLoop);
+});
+
+// --- Minimal loop di gioco ---
 function drawNotes(currentTime){
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    for(let i=1;i<columns;i++){
-        ctx.strokeStyle="rgba(200,200,200,0.3)";
-        ctx.lineWidth=2;
-        ctx.beginPath();ctx.moveTo(i*columnWidth,0);ctx.lineTo(i*columnWidth,canvas.height);ctx.stroke();
-    }
-    for(let i=0;i<columns;i++){
-        const x=i*columnWidth+columnWidth/2;
-        const label=document.getElementById("label"+i);
-        if(label) label.style.left=x+"px";
-    }
-    ctx.fillStyle='red';
-    notes.forEach(note=>{
+    notes.forEach(note => {
         if(note.hit) return;
-        const y=(currentTime - note.time)*noteSpeed;
+        const y = (currentTime - note.time) * 400;
         if(y>canvas.height) return;
-        const size=columnWidth-20;
-        ctx.fillRect(note.column*columnWidth+10, y, size, 30);
+        const colWidth = canvas.width/4;
+        ctx.fillStyle = "red";
+        ctx.fillRect(note.column*colWidth+10, y, colWidth-20, 30);
     });
 }
 
-function animateHitLine(){hitLine.style.background="rgba(255,255,255,1)"; setTimeout(()=>{hitLine.style.background="rgba(255,255,255,0.5)";},100);}
-function updateRank(){let accuracy = totalHits>0 ? totalPerfect/totalHits : 0; accuracyFill.style.width=(accuracy*100)+"%"; 
-let rank="F"; if(score>9000) rank="S"; else if(score>7000) rank="A"; else if(score>5000) rank="B"; else if(score>3000) rank="C"; 
-rankDisplay.innerText="Rank: "+rank;}
-
-// --- Controllo tasti ---
-let keysPressed={};
-document.addEventListener("keydown",e=>{
-    if(keysPressed[e.code]) return;
-    keysPressed[e.code]=true;
-    const currentTime=bgm.currentTime;
-    let hit=false;
-    notes.forEach(note=>{
-        if(note.hit) return;
-        const y=(currentTime - note.time)*noteSpeed;
-        if(y>=canvas.height-110 && y<=canvas.height-50 && e.code===columnCodes[note.column]){
-            note.hit=true; hit=true; totalHits++;
-            const dist=Math.abs(y-(canvas.height-70));
-            if(dist<10){score+=100; totalPerfect++;} else if(dist<20) score+=70; else score+=50;
-        }
-    });
-    if(hit){combo++; animateHitLine();} else combo=0;
-    document.getElementById("score").innerText="Punti: "+score;
-    document.getElementById("combo").innerText="Combo: "+combo+"x";
-    updateRank();
-});
-document.addEventListener("keyup",e=>{keysPressed[e.code]=false;});
-
-// --- Audio e note ---
-let audioCtx, analyser, source, dataArray; let lastNoteTime=0;
-function setupAudio(){audioCtx=new (window.AudioContext||window.webkitAudioContext)(); source=audioCtx.createMediaElementSource(bgm); analyser=audioCtx.createAnalyser(); analyser.fftSize=512; source.connect(analyser); analyser.connect(audioCtx.destination); dataArray=new Uint8Array(analyser.frequencyBinCount);}
-function generateNotes(){if(!gameRunning) return; analyser.getByteFrequencyData(dataArray); let sum=0; for(let i=0;i<dataArray.length;i++) sum+=dataArray[i]; const avg=sum/dataArray.length; const currentTime=bgm.currentTime; if(avg>50 && (currentTime-lastNoteTime)>noteCooldown){ const column=Math.floor(Math.random()*columns); notes.push({column:column,hit:false,time:currentTime}); lastNoteTime=currentTime;} requestAnimationFrame(generateNotes);}
-function gameLoop(){if(!gameRunning) return; drawNotes(bgm.currentTime); requestAnimationFrame(gameLoop);}
-
-// --- Start ---
-startBtn.addEventListener("click",()=>{
-    if(gameRunning) return;
-    const diff=prompt("Seleziona difficoltà: facile, media, difficile","media");
-    switch(diff.toLowerCase()){case "facile": noteSpeed=300; noteCooldown=0.5; break; case "media": noteSpeed=400; noteCooldown=0.25; break; case "difficile": noteSpeed=500; noteCooldown=0.15; break; default: noteSpeed=400; noteCooldown=0.25;}
-    gameRunning=true; document.getElementById("menu").style.display="none";
-    for(let i=0;i<columns;i++){ let label=document.createElement("div"); label.id="label"+i; label.className="columnLabel"; label.innerText=columnKeys[i]; document.body.appendChild(label);}
-    setupAudio(); bg.style.opacity=1; setTimeout(()=>{hitLine.style.display="block"; hitLine.style.opacity=1; bgm.currentTime=0; bgm.play();},500);
-    generateNotes(); requestAnimationFrame(gameLoop);
-});
-
-// --- Impostazioni ---
-settingsBtn.addEventListener("click",()=>{keySettings.style.display = keySettings.style.display==="none"?"block":"none";});
-for(let i=0;i<columns;i++){
-    document.getElementById("col"+i).addEventListener("click",()=>{
-        const newKey = prompt("Inserisci nuovo tasto per colonna "+(i+1), columnKeys[i]);
-        if(newKey){ columnKeys[i]=newKey.toUpperCase(); columnCodes[i]="Key"+newKey.toUpperCase(); document.getElementById("col"+i).innerText=columnKeys[i]; }
-    });
+function gameLoop(){
+    if(!gameRunning) return;
+    drawNotes(bgm.currentTime);
+    requestAnimationFrame(gameLoop);
 }
 </script>
+
 </body>
 </html>
