@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BIRDBRAIN Rhythm Note dall'Alto</title>
+<title>BIRDBRAIN Rhythm Note Scendenti</title>
 <style>
 body {margin:0;overflow:hidden;font-family:Arial;background:black;color:white;}
 #score,#combo{position:absolute;top:10px;font-size:24px;z-index:10;}
@@ -67,8 +67,8 @@ function drawNotes(currentTime){
     ctx.fillStyle='red';
     notes.forEach(note=>{
         if(note.hit) return;
-        // NOTE DALL'ALTO
-        const y=(note.time-currentTime)*400; // 0 = in alto, aumenta verso il basso
+        // NOTE DALL'ALTO VERSO IL BASSO
+        const y=(currentTime - note.time)*400; // y = 0 in alto, aumenta verso il basso
         if(y > canvas.height) return;
         const size=40,radius=8;
         ctx.beginPath();
@@ -100,7 +100,7 @@ document.addEventListener("keydown",e=>{
         let hit=false;
         notes.forEach(note=>{
             if(note.hit) return;
-            const y=(note.time-currentTime)*400;
+            const y=(currentTime - note.time)*400;
             if(y>=canvas.height-110 && y<=canvas.height-50){
                 note.hit=true;
                 hit=true;
@@ -163,7 +163,7 @@ startBtn.addEventListener("click",()=>{
     document.getElementById("menu").style.display="none";
     setupAudio();
 
-    // Fade-in dello sfondo graduale
+    // Fade-in sfondo
     bg.style.opacity=1;
 
     // Hit line fade-in
