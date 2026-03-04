@@ -9,71 +9,31 @@ body {margin:0;overflow:hidden;font-family:Arial;background:black;color:white;}
 #score,#combo,#rank{position:absolute;top:10px;font-size:24px;z-index:10;}
 #score{left:10px;} #combo{left:200px;} #rank{left:400px;}
 #gameCanvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;}
-#bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-2;
-    background:center center/cover no-repeat;filter:brightness(0.3) blur(4px);opacity:0;transition:opacity 1s ease-in;}
-#hitLine{position:absolute;bottom:70px;left:0;width:100%;height:3px;
-    background:rgba(255,255,255,0.5);z-index:5;opacity:0;}
-#accuracyBar{position:absolute;bottom:50px;left:50%;transform:translateX(-50%);
-    width:300px;height:8px;background:rgba(255,255,255,0.2);border-radius:4px;
-    overflow:hidden;z-index:5;}
+#bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-2;background:center center/cover no-repeat;filter:brightness(0.3) blur(4px);opacity:0;transition:opacity 1s ease-in;}
+#hitLine{position:absolute;bottom:70px;left:0;width:100%;height:3px;background:rgba(255,255,255,0.5);z-index:5;opacity:0;}
+#accuracyBar{position:absolute;bottom:50px;left:50%;transform:translateX(-50%);width:300px;height:8px;background:rgba(255,255,255,0.2);border-radius:4px;overflow:hidden;z-index:5;}
 #accuracyFill{width:0%;height:100%;background:lime;transition:width 0.1s;}
-#difficultyBar{position:absolute;top:20px;left:50%;transform:translateX(-50%);
-    height:25px;width:200px;background:gray;border-radius:5px;text-align:center;
-    line-height:25px;color:black;font-weight:bold;z-index:15;}
-#rainbowBorder {
-  position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:50;
-  background: linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet);
-  background-size: 200% 200%;
-  animation: rainbowMove 5s linear infinite, rainbowWave 6s ease-in-out infinite;
-  opacity:0.05;
-}
+#difficultyBar{position:absolute;top:20px;left:50%;transform:translateX(-50%);height:25px;width:200px;background:gray;border-radius:5px;text-align:center;line-height:25px;color:black;font-weight:bold;z-index:15;}
+#rainbowBorder {position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:50;background: linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet);background-size: 200% 200%;animation: rainbowMove 5s linear infinite, rainbowWave 6s ease-in-out infinite;opacity:0.05;}
 @keyframes rainbowMove {from {background-position:0 0;} to {background-position:200% 0;}}
 @keyframes rainbowWave {0%,100%{transform:translateY(0);} 50%{transform:translateY(15px);}}
 
-#introScreen {
-    position:fixed; top:0; left:0; width:100%; height:100%;
-    display:flex; flex-direction:column; justify-content:center; align-items:center;
-    z-index:100; opacity:1; transition:opacity 1s ease-in-out;
-    background: rgba(0,0,0,0.8);
-    backdrop-filter: blur(5px);
-}
-
-#logo {
-    width:400px; opacity:0;
-    animation:logoFadeIn 2s forwards, logoFloat 3s ease-in-out infinite alternate;
-    filter: drop-shadow(0 0 15px white);
-}
+#introScreen {position:fixed; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:100; opacity:1; transition:opacity 1s ease-in-out; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);}
+#logo {width:400px; opacity:0; animation:logoFadeIn 2s forwards, logoFloat 3s ease-in-out infinite alternate; filter: drop-shadow(0 0 15px white);}
 @keyframes logoFadeIn {to {opacity:1;}}
 @keyframes logoFloat {0% {transform: translateY(0);} 100% {transform: translateY(-20px);}}
-
-#menuContent {
-    margin-top:20px;
-    text-align:center;
-    background: rgba(0,0,0,0.5);
-    padding:20px 40px;
-    border-radius:10px;
-}
-
-#songSelector, #settingsBtn, #startBtnIntro {
-    margin:5px;
-    padding:10px 20px;
-    font-size:18px;
-    cursor:pointer;
-    background: rgba(255,255,255,0.1);
-    color:white;
-    border:2px solid white;
-    border-radius:6px;
-    backdrop-filter: blur(2px);
-}
-
+#menuContent {margin-top:20px;text-align:center;background: rgba(0,0,0,0.5);padding:20px 40px;border-radius:10px;}
+#songSelector, #settingsBtn, #startBtnIntro {margin:5px;padding:10px 20px;font-size:18px;cursor:pointer;background: rgba(255,255,255,0.1);color:white;border:2px solid white;border-radius:6px;backdrop-filter: blur(2px);}
 button, select{font-size:18px;padding:10px 20px;margin:5;cursor:pointer;}
-.columnLabel{position:absolute;bottom:30px;font-size:20px;color:rgba(255,255,255,0.7);
-    width:100px;text-align:center;transform:translateX(-50%);pointer-events:none;}
-#keySettings{position:absolute;top:60px;left:50%;transform:translateX(-50%);
-    background:rgba(0,0,0,0.7);padding:10px 15px;border-radius:8px;display:none;z-index:20;}
-#keySettings td{border:1px solid rgba(255,255,255,0.3);padding:8px 15px;text-align:center;
-    cursor:pointer;color:white;font-weight:bold;}
+.columnLabel{position:absolute;bottom:30px;font-size:20px;color:rgba(255,255,255,0.7);width:100px;text-align:center;transform:translateX(-50%);pointer-events:none;}
+#keySettings{position:absolute;top:60px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);padding:10px 15px;border-radius:8px;display:none;z-index:20;}
+#keySettings td{border:1px solid rgba(255,255,255,0.3);padding:8px 15px;text-align:center;cursor:pointer;color:white;font-weight:bold;}
 #keySettings td:hover{background:rgba(255,255,255,0.2);}
+
+#menuInfo {text-align:center; color:white; margin-bottom:15px;}
+#songTitle { font-size:28px; font-weight:bold; margin-bottom:5px; }
+#difficultyBadge { display:inline-block; padding:5px 15px; background:rgba(255,255,255,0.2); border-radius:8px; cursor:pointer; transition:all 0.5s ease;}
+#timer { font-size:16px; margin-top:5px; }
 </style>
 </head>
 <body>
@@ -81,6 +41,11 @@ button, select{font-size:18px;padding:10px 20px;margin:5;cursor:pointer;}
 <div id="introScreen">
     <img id="logo" src="Risorsa_1sinny.png" alt="Logo">
     <div id="menuContent">
+        <div id="menuInfo">
+            <div id="songTitle">BIRDBRAIN</div>
+            <div id="difficultyBadge">MEDIO</div>
+            <div id="timer">00:00 / 00:00</div>
+        </div>
         <select id="songSelector">
           <option value="BIRDBRAIN">BIRDBRAIN</option>
           <option value="Mesmerizer">Mesmerizer</option>
@@ -125,6 +90,9 @@ const rankDisplay=document.getElementById("rank");
 const hitLine=document.getElementById("hitLine");
 const difficultyBar=document.getElementById("difficultyBar");
 const rainbowBorder=document.getElementById("rainbowBorder");
+const songTitle=document.getElementById("songTitle");
+const difficultyBadge=document.getElementById("difficultyBadge");
+const timerElem=document.getElementById("timer");
 
 canvas.width=window.innerWidth;
 canvas.height=window.innerHeight;
@@ -146,8 +114,9 @@ const songs={
 let currentSong = songs[songSelector.value];
 
 function updateDifficultyDisplay(){
-    difficultyBar.style.background = currentSong.color;
-    difficultyBar.innerText = currentSong.difficulty;
+    difficultyBadge.innerText = currentSong.difficulty;
+    difficultyBadge.style.background = currentSong.color;
+    songTitle.innerText = songSelector.value;
 }
 updateDifficultyDisplay();
 
@@ -165,7 +134,7 @@ const introScreen = document.getElementById("introScreen");
 
 startBtnIntro.addEventListener("click", () => {
     introScreen.style.opacity = 0;
-    setTimeout(()=>{ introScreen.style.display="none"; }, 1000);
+    setTimeout(()=>{ introScreen.style.display="none"; }, 500);
 
     // Reset variabili
     notes = []; lastBeat = 0; score = 0; combo = 0; totalHits = 0; totalPerfect = 0;
@@ -177,11 +146,8 @@ startBtnIntro.addEventListener("click", () => {
 
     // Audio pronto
     bgm.src = currentSong.mp3;
-    bgm.load();
-    bgm.oncanplaythrough = () => {
-        bgm.currentTime = 0;
-        bgm.play();
-    };
+    bgm.currentTime = 0;
+    bgm.play().catch(()=>{console.log("Autoplay bloccato, attendi click");});
 
     gameRunning = true;
     difficultyBar.style.display = "block";
@@ -199,6 +165,14 @@ startBtnIntro.addEventListener("click", () => {
 
     hitLine.style.opacity = 1;
     requestAnimationFrame(gameLoop);
+});
+
+// Clic difficoltà sposta al centro
+difficultyBadge.addEventListener("click", ()=>{
+    difficultyBadge.style.position = "absolute";
+    difficultyBadge.style.top = "20px";
+    difficultyBadge.style.left = "50%";
+    difficultyBadge.style.transform = "translateX(-50%)";
 });
 
 settingsBtn.addEventListener("click",()=>{keySettings.style.display = keySettings.style.display==="none"?"block":"none";});
@@ -224,15 +198,7 @@ function generateNotes(currentTime){
 
 function spawnParticles(x, y){
     for(let i=0;i<8;i++){
-        particles.push({
-            x: x + columnWidth/2,
-            y: y + 25,
-            vx: (Math.random()-0.5)*4,
-            vy: (Math.random()-1.5)*4,
-            alpha: 1,
-            size: Math.random()*6+4,
-            hue: Math.random()*360
-        });
+        particles.push({x:x+columnWidth/2,y:y+25,vx:(Math.random()-0.5)*4,vy:(Math.random()-1.5)*4,alpha:1,size:Math.random()*6+4,hue:Math.random()*360});
     }
 }
 
@@ -246,39 +212,30 @@ function drawNotes(deltaTime){
     notes.forEach(note=>{
         if(note.hit) return;
         note.y+=noteSpeed*deltaTime;
-        if(note.y>canvas.height){ 
-            note.hit=true; totalHits++; score-=50; if(score<0) score=0; combo=0; 
-            document.getElementById("score").innerText="Punti: "+score;
-            document.getElementById("combo").innerText="Combo: "+combo+"x"; updateRank();
-        }
+        if(note.y>canvas.height){ note.hit=true; totalHits++; score-=50; if(score<0)score=0; combo=0; document.getElementById("score").innerText="Punti: "+score; document.getElementById("combo").innerText="Combo: "+combo+"x"; updateRank();}
         ctx.fillStyle="red";
         ctx.fillRect(note.column*columnWidth+10,note.y,columnWidth-20,50);
     });
     for(let i=particles.length-1;i>=0;i--){
         const p=particles[i];
         ctx.fillStyle=`hsla(${p.hue},80%,60%,${p.alpha})`;
-        ctx.beginPath();
-        ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill();
         p.x+=p.vx; p.y+=p.vy; p.alpha-=0.03;
-        if(p.alpha<=0)particles.splice(i,1);
+        if(p.alpha<=0) particles.splice(i,1);
     }
-    for(let i=hitTexts.length-1; i>=0; i--){
-        const t = hitTexts[i];
-        ctx.globalAlpha = t.alpha;
-        ctx.fillStyle = "white";
-        ctx.font = t.size + "px Arial";
-        ctx.textAlign = "center";
-        ctx.fillText(t.text, t.x, t.y);
-        ctx.globalAlpha = 1;
-        t.y -= 30 * deltaTime;
-        t.alpha -= 1.5 * deltaTime;
-        if(t.alpha <= 0) hitTexts.splice(i,1);
+    for(let i=hitTexts.length-1;i>=0;i--){
+        const t=hitTexts[i];
+        ctx.globalAlpha=t.alpha;
+        ctx.fillStyle="white"; ctx.font=t.size+"px Arial"; ctx.textAlign="center";
+        ctx.fillText(t.text,t.x,t.y);
+        ctx.globalAlpha=1;
+        t.y-=30*deltaTime; t.alpha-=1.5*deltaTime;
+        if(t.alpha<=0) hitTexts.splice(i,1);
     }
     for(let i=0;i<columns;i++){
-        const x=i*columnWidth + columnWidth/2;
+        const x=i*columnWidth+columnWidth/2;
         const label=document.getElementById("label"+i);
-        if(label) label.style.left = x+"px";
+        if(label) label.style.left=x+"px";
     }
 }
 
@@ -295,48 +252,47 @@ function updateRank(){
     rainbowBorder.style.opacity=(rank==="S")?0.05:0;
 }
 
-let keysPressed = {};
-document.addEventListener("keydown", e => {
-    if(keysPressed[e.code]) return;
-    keysPressed[e.code] = true;
-    let hit = false;
-    notes.forEach(note => {
-        if(note.hit) return;
-        if(note.y >= canvas.height - 120 && note.y <= canvas.height - 40 && e.code === columnCodes[note.column]){
-            note.hit = true;
-            hit = true;
-            totalHits++;
-            const dist = Math.abs(note.y - (canvas.height - 70));
-            const maxDist = 60;
-            let pointMultiplier = Math.max(0, 1 - dist / maxDist);
-            const baseScore = 100;
-            const points = Math.round(baseScore * pointMultiplier);
-            score += points;
-            let text = "";
-            if(dist < 5) text = "Perfect!";
-            else if(dist < 10) text = "Sick!";
-            else if(dist < 20) text = "Awesome!";
-            else if(dist < 35) text = "Nice!";
-            else text = "Meh...";
+let keysPressed={};
+document.addEventListener("keydown",e=>{
+    if(keysPressed[e.code])return;
+    keysPressed[e.code]=true;
+    let hit=false;
+    notes.forEach(note=>{
+        if(note.hit)return;
+        if(note.y>=canvas.height-120 && note.y<=canvas.height-40 && e.code===columnCodes[note.column]){
+            note.hit=true; hit=true; totalHits++;
+            const dist=Math.abs(note.y-(canvas.height-70));
+            const maxDist=60; let pointMultiplier=Math.max(0,1-dist/maxDist);
+            const baseScore=100; const points=Math.round(baseScore*pointMultiplier); score+=points;
+            let text="";
+            if(dist<5) text="Perfect!"; else if(dist<10) text="Sick!";
+            else if(dist<20) text="Awesome!"; else if(dist<35) text="Nice!"; else text="Meh...";
             hitTexts.push({text:text,x:note.column*columnWidth+columnWidth/2,y:note.y,alpha:1,size:30});
-            if(dist < 5) totalPerfect++;
-            spawnParticles(note.column*columnWidth, note.y);
+            if(dist<5) totalPerfect++;
+            spawnParticles(note.column*columnWidth,note.y);
         }
     });
-    if(hit){combo++; animateHitLine();} else {combo=0;}
+    if(hit){combo++; animateHitLine();}else combo=0;
     document.getElementById("score").innerText="Punti: "+score;
     document.getElementById("combo").innerText="Combo: "+combo+"x";
     updateRank();
 });
-document.addEventListener("keyup", e => { keysPressed[e.code] = false; });
+document.addEventListener("keyup",e=>{keysPressed[e.code]=false;});
 
 let lastTime=0;
+function updateTimer(){
+    const current=bgm.currentTime;
+    const total=bgm.duration||0;
+    function formatTime(t){ const m=Math.floor(t/60).toString().padStart(2,'0'); const s=Math.floor(t%60).toString().padStart(2,'0'); return `${m}:${s}`; }
+    timerElem.innerText=`${formatTime(current)} / ${formatTime(total)}`;
+}
 function gameLoop(timestamp){
-    if(!gameRunning) return;
+    if(!gameRunning)return;
     const deltaTime=(timestamp-lastTime)/1000;
     lastTime=timestamp;
     generateNotes(bgm.currentTime);
     drawNotes(deltaTime);
+    updateTimer();
     requestAnimationFrame(gameLoop);
 }
 };
