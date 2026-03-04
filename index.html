@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>rhythm game cacca</title>
+<title>lol lol lol</title>
 <style>
 body {margin:0;overflow:hidden;font-family:Arial;background:black;color:white;}
 #gameCanvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;}
@@ -183,6 +183,28 @@ document.addEventListener("keydown",e=>{
     }
 });
 
+function drawColumns(){
+    for(let i=1;i<columns;i++){
+        ctx.strokeStyle="rgba(200,200,200,0.3)";
+        ctx.lineWidth=2;
+        ctx.beginPath();
+        ctx.moveTo(i*columnWidth,0);
+        ctx.lineTo(i*columnWidth,canvas.height);
+        ctx.stroke();
+    }
+    for(let i=0;i<columns;i++){
+        let label=document.getElementById("label"+i);
+        if(!label){
+            label=document.createElement("div");
+            label.id="label"+i;
+            label.className="columnLabel";
+            label.innerText=columnKeys[i];
+            document.body.appendChild(label);
+        }
+        label.style.left=(i*columnWidth + columnWidth/2) + "px";
+    }
+}
+
 function gameLoop(timestamp){
     if(!gameRunning) return;
     const deltaTime=(timestamp-lastTime)/1000;
@@ -190,8 +212,11 @@ function gameLoop(timestamp){
 
     generateNotes(bgm.currentTime);
 
-    // muove note
     ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    drawColumns();
+
+    // muove note
     for(let note of notes){
         if(note.hit) continue;
         note.y += noteSpeed*deltaTime;
