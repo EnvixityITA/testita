@@ -141,7 +141,7 @@ startBtn.addEventListener("click",()=>{
     bgm.play();
     gameRunning=true;
     document.getElementById("menu").style.display="none";
-    difficultyBar.style.display="none"; // barra difficoltà scompare
+    difficultyBar.style.display="none";
 
     for(let i=0;i<columns;i++){
         let label=document.createElement("div");
@@ -182,7 +182,7 @@ function spawnParticles(x, y){
     for(let i=0;i<8;i++){
         particles.push({
             x: x + columnWidth/2,
-            y: y + 15,
+            y: y + 25,
             vx: (Math.random()-0.5)*4,
             vy: (Math.random()-1.5)*4,
             alpha: 1,
@@ -208,7 +208,7 @@ function drawNotes(deltaTime){
             document.getElementById("combo").innerText="Combo: "+combo+"x"; updateRank();
         }
         ctx.fillStyle="red";
-        ctx.fillRect(note.column*columnWidth+10,note.y,columnWidth-20,30);
+        ctx.fillRect(note.column*columnWidth+10,note.y,columnWidth-20,50); // note più lunghe
     });
     for(let i=particles.length-1;i>=0;i--){
         const p=particles[i];
@@ -220,7 +220,6 @@ function drawNotes(deltaTime){
         if(p.alpha<=0)particles.splice(i,1);
     }
 
-    // aggiorna posizioni dei tasti
     for(let i=0;i<columns;i++){
         const x=i*columnWidth + columnWidth/2;
         const label=document.getElementById("label"+i);
@@ -239,33 +238,52 @@ function updateRank(){
     else if(score>5000) rank="B";
     else if(score>3000) rank="C";
     rankDisplay.innerText="Rank: "+rank;
-    rainbowBorder.style.opacity=(rank==="S")?0.05:0; // 95% trasparente con animazione
+    rainbowBorder.style.opacity=(rank==="S")?0.05:0;
 }
 
-let keysPressed={};
-document.addEventListener("keydown",e=>{
-    if(keysPressed[e.code])return;
-    keysPressed[e.code]=true;
-    let hit=false;
-    notes.forEach(note=>{
-        if(note.hit)return;
-        if(note.y>=canvas.height-110 && note.y<=canvas.height-50 && e.code===columnCodes[note.column]){
-            note.hit=true;
-            hit=true;
+// =======================
+// KEYDOWN AGGIORNATO
+// =======================
+let keysPressed = {};
+document.addEventListener("keydown", e => {
+    if(keysPressed[e.code]) return;
+    keysPressed[e.code] = true;
+
+    let hit = false;
+    notes.forEach(note => {
+        if(note.hit) return;
+
+        // finestra di hit più ampia per note più lunghe
+        if(note.y >= canvas.height - 120 && note.y <= canvas.height - 40 && e.code === columnCodes[note.column]){
+            note.hit = true;
+            hit = true;
             totalHits++;
-            const dist=Math.abs(note.y-(canvas.height-70));
-            if(dist<10){score+=100; totalPerfect++;}
-            else if(dist<20)score+=70;
-            else score+=50;
-            spawnParticles(note.column*columnWidth,note.y);
+
+            // punteggio dinamico basato sulla distanza
+            const dist = Math.abs(note.y - (canvas.height - 70));
+            const maxDist = 60;
+            let pointMultiplier = Math.max(0, 1 - dist / maxDist);
+            const baseScore = 100;
+            const points = Math.round(baseScore * pointMultiplier);
+            score += points;
+
+            if(dist < 10) totalPerfect++;
+            spawnParticles(note.column * columnWidth, note.y);
         }
     });
-    if(hit){combo++;animateHitLine();}else combo=0;
-    document.getElementById("score").innerText="Punti: "+score;
-    document.getElementById("combo").innerText="Combo: "+combo+"x";
+
+    if(hit){
+        combo++;
+        animateHitLine();
+    } else {
+        combo = 0;
+    }
+
+    document.getElementById("score").innerText = "Punti: " + score;
+    document.getElementById("combo").innerText = "Combo: " + combo + "x";
     updateRank();
 });
-document.addEventListener("keyup",e=>{keysPressed[e.code]=false;});
+document.addEventListener("keyup", e => { keysPressed[e.code] = false; });
 
 let lastTime=0;
 function gameLoop(timestamp){
