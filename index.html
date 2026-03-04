@@ -100,6 +100,7 @@ canvas.height=window.innerHeight;
 let notes=[], gameRunning=false;
 let score=0, combo=0, totalHits=0, totalPerfect=0;
 let particles=[];
+let hitTexts = []; // array per le scritte di hit
 
 const columns=4;
 let columnKeys=["D","F","J","K"];
@@ -194,11 +195,15 @@ function spawnParticles(x, y){
 
 function drawNotes(deltaTime){
     ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // linee colonne
     for(let i=1;i<columns;i++){
         ctx.strokeStyle="rgba(200,200,200,0.3)";
         ctx.lineWidth=2;
         ctx.beginPath(); ctx.moveTo(i*columnWidth,0); ctx.lineTo(i*columnWidth,canvas.height); ctx.stroke();
     }
+
+    // note
     notes.forEach(note=>{
         if(note.hit) return;
         note.y+=noteSpeed*deltaTime;
@@ -210,6 +215,8 @@ function drawNotes(deltaTime){
         ctx.fillStyle="red";
         ctx.fillRect(note.column*columnWidth+10,note.y,columnWidth-20,50); // note più lunghe
     });
+
+    // particelle
     for(let i=particles.length-1;i>=0;i--){
         const p=particles[i];
         ctx.fillStyle=`hsla(${p.hue},80%,60%,${p.alpha})`;
@@ -220,6 +227,22 @@ function drawNotes(deltaTime){
         if(p.alpha<=0)particles.splice(i,1);
     }
 
+    // scritte hit
+    for(let i=hitTexts.length-1; i>=0; i--){
+        const t = hitTexts[i];
+        ctx.globalAlpha = t.alpha;
+        ctx.fillStyle = "white";
+        ctx.font = t.size + "px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(t.text, t.x, t.y);
+        ctx.globalAlpha = 1;
+
+        t.y -= 30 * deltaTime;
+        t.alpha -= 1.5 * deltaTime;
+        if(t.alpha <= 0) hitTexts.splice(i,1);
+    }
+
+    // posizioni etichette
     for(let i=0;i<columns;i++){
         const x=i*columnWidth + columnWidth/2;
         const label=document.getElementById("label"+i);
@@ -242,7 +265,7 @@ function updateRank(){
 }
 
 // =======================
-// KEYDOWN AGGIORNATO
+// KEYDOWN AGGIORNATO CON HIT TEXT
 // =======================
 let keysPressed = {};
 document.addEventListener("keydown", e => {
@@ -253,13 +276,12 @@ document.addEventListener("keydown", e => {
     notes.forEach(note => {
         if(note.hit) return;
 
-        // finestra di hit più ampia per note più lunghe
         if(note.y >= canvas.height - 120 && note.y <= canvas.height - 40 && e.code === columnCodes[note.column]){
             note.hit = true;
             hit = true;
             totalHits++;
 
-            // punteggio dinamico basato sulla distanza
+            // punteggio dinamico
             const dist = Math.abs(note.y - (canvas.height - 70));
             const maxDist = 60;
             let pointMultiplier = Math.max(0, 1 - dist / maxDist);
@@ -267,7 +289,23 @@ document.addEventListener("keydown", e => {
             const points = Math.round(baseScore * pointMultiplier);
             score += points;
 
-            if(dist < 10) totalPerfect++;
+            // scritta hit
+            let text = "";
+            if(dist < 5) text = "Perfect!";
+            else if(dist < 10) text = "Sick!";
+            else if(dist < 20) text = "Awesome!";
+            else if(dist < 35) text = "Nice!";
+            else text = "Meh...";
+
+            hitTexts.push({
+                text: text,
+                x: note.column * columnWidth + columnWidth/2,
+                y: note.y,
+                alpha: 1,
+                size: 30
+            });
+
+            if(dist < 5) totalPerfect++;
             spawnParticles(note.column * columnWidth, note.y);
         }
     });
