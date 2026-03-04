@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rhythm Game CACCA</title>
+<title>Rhythm Game BPM</title>
 <style>
 body {margin:0;overflow:hidden;font-family:Arial;background:black;color:white;}
 #score,#combo,#rank{position:absolute;top:10px;font-size:24px;z-index:10;}
@@ -17,7 +17,7 @@ body {margin:0;overflow:hidden;font-family:Arial;background:black;color:white;}
     width:300px;height:8px;background:rgba(255,255,255,0.2);border-radius:4px;
     overflow:hidden;z-index:5;}
 #accuracyFill{width:0%;height:100%;background:lime;transition:width 0.1s;}
-#difficultyBar{position:absolute;top:calc(50% - 100px);left:50%;transform:translateX(-50%);
+#difficultyBar{position:absolute;top:20px;left:50%;transform:translateX(-50%);
     height:25px;width:200px;background:gray;border-radius:5px;text-align:center;
     line-height:25px;color:black;font-weight:bold;z-index:15;}
 #rainbowBorder {
@@ -41,6 +41,7 @@ body {margin:0;overflow:hidden;font-family:Arial;background:black;color:white;}
 #logo {
     width:400px; opacity:0;
     animation:logoFadeIn 2s forwards, logoFloat 3s ease-in-out infinite alternate;
+    filter: drop-shadow(0 0 15px white);
 }
 @keyframes logoFadeIn {to {opacity:1;}}
 @keyframes logoFloat {0% {transform: translateY(0);} 100% {transform: translateY(-20px);}}
@@ -158,33 +159,33 @@ songSelector.addEventListener("change", () => {
     updateDifficultyDisplay();
 });
 
-// ===== INIZIO GIOCO DAL LOGO =====
+// ===== START GIOCO =====
 const startBtnIntro = document.getElementById("startBtnIntro");
 const introScreen = document.getElementById("introScreen");
 
 startBtnIntro.addEventListener("click", () => {
-    // Nascondi menu
     introScreen.style.opacity = 0;
-    setTimeout(() => { introScreen.style.display = "none"; }, 1000);
+    setTimeout(()=>{ introScreen.style.display="none"; }, 1000);
 
-    // Reset variabili gioco
-    notes = []; lastBeat = 0;
-    score = 0; combo = 0; totalHits = 0; totalPerfect = 0;
+    // Reset variabili
+    notes = []; lastBeat = 0; score = 0; combo = 0; totalHits = 0; totalPerfect = 0;
 
-    // Imposta background
+    // Background
     const bgImg = new Image();
     bgImg.src = currentSong.bg;
     bgImg.onload = () => { bg.style.backgroundImage = `url('${currentSong.bg}')`; bg.style.opacity = 1; };
 
-    // Avvia musica
+    // Audio pronto
     bgm.src = currentSong.mp3;
-    bgm.currentTime = 0;
-    bgm.play();
+    bgm.load();
+    bgm.oncanplaythrough = () => {
+        bgm.currentTime = 0;
+        bgm.play();
+    };
 
     gameRunning = true;
-    difficultyBar.style.display = "none";
+    difficultyBar.style.display = "block";
 
-    // Crea etichette colonne
     for(let i=0;i<columns;i++){
         let label=document.createElement("div");
         label.id="label"+i;
@@ -340,7 +341,5 @@ function gameLoop(timestamp){
 }
 };
 </script>
-</body>
-</html>
 </body>
 </html>
