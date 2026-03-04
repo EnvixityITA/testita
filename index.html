@@ -34,8 +34,6 @@ body {margin:0;overflow:hidden;font-family:Arial;background:black;color:white;}
     position:fixed; top:0; left:0; width:100%; height:100%;
     display:flex; flex-direction:column; justify-content:center; align-items:center;
     z-index:100; opacity:1; transition:opacity 1s ease-in-out;
-
-    /* Sfondo semi-trasparente con blur per leggibilità */
     background: rgba(0,0,0,0.8);
     backdrop-filter: blur(5px);
 }
@@ -44,25 +42,29 @@ body {margin:0;overflow:hidden;font-family:Arial;background:black;color:white;}
     width:400px; opacity:0;
     animation:logoFadeIn 2s forwards, logoFloat 3s ease-in-out infinite alternate;
 }
-
 @keyframes logoFadeIn {to {opacity:1;}}
 @keyframes logoFloat {0% {transform: translateY(0);} 100% {transform: translateY(-20px);}}
 
-#startBtnIntro {
-    margin-top:50px; font-size:24px; padding:12px 30px; cursor:pointer; opacity:0;
-    animation:btnFadeIn 2s 1s forwards;
+#menuContent {
+    margin-top:20px;
+    text-align:center;
+    background: rgba(0,0,0,0.5);
+    padding:20px 40px;
+    border-radius:10px;
+}
 
-    /* Sfondo e bordi per leggibilità */
+#songSelector, #settingsBtn, #startBtnIntro {
+    margin:5px;
+    padding:10px 20px;
+    font-size:18px;
+    cursor:pointer;
     background: rgba(255,255,255,0.1);
-    color: white;
-    border: 2px solid white;
-    border-radius: 8px;
+    color:white;
+    border:2px solid white;
+    border-radius:6px;
     backdrop-filter: blur(2px);
 }
 
-@keyframes btnFadeIn {to {opacity:1;}}
-
-#menu{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10;text-align:center;}
 button, select{font-size:18px;padding:10px 20px;margin:5;cursor:pointer;}
 .columnLabel{position:absolute;bottom:30px;font-size:20px;color:rgba(255,255,255,0.7);
     width:100px;text-align:center;transform:translateX(-50%);pointer-events:none;}
@@ -75,10 +77,24 @@ button, select{font-size:18px;padding:10px 20px;margin:5;cursor:pointer;}
 </head>
 <body>
 
-<!-- Schermata iniziale con logo -->
 <div id="introScreen">
     <img id="logo" src="Risorsa_1sinny.png" alt="Logo">
-    <button id="startBtnIntro">Start</button>
+    <div id="menuContent">
+        <select id="songSelector">
+          <option value="BIRDBRAIN">BIRDBRAIN</option>
+          <option value="Mesmerizer">Mesmerizer</option>
+        </select>
+        <br>
+        <button id="startBtnIntro">Start</button>
+        <button id="settingsBtn">Impostazioni</button>
+        <div id="keySettings">
+            <table><tr>
+              <td id="col0">D</td><td id="col1">F</td>
+              <td id="col2">J</td><td id="col3">K</td>
+            </tr></table>
+            <small>Clicca su un tasto per cambiarlo</small>
+        </div>
+    </div>
 </div>
 
 <div id="bg"></div>
@@ -91,23 +107,6 @@ button, select{font-size:18px;padding:10px 20px;margin:5;cursor:pointer;}
 <div id="hitLine"></div>
 <div id="accuracyBar"><div id="accuracyFill"></div></div>
 <div id="difficultyBar">DIFFICOLTÀ</div>
-
-<div id="menu">
-<select id="songSelector">
-  <option value="BIRDBRAIN">BIRDBRAIN</option>
-  <option value="Mesmerizer">Mesmerizer</option>
-</select>
-<br>
-<button id="startBtn">Start</button>
-<button id="settingsBtn">Impostazioni</button>
-<div id="keySettings">
-    <table><tr>
-      <td id="col0">D</td><td id="col1">F</td>
-      <td id="col2">J</td><td id="col3">K</td>
-    </tr></table>
-    <small>Clicca su un tasto per cambiarlo</small>
-</div>
-</div>
 
 <audio id="bgm" crossorigin="anonymous"></audio>
 
@@ -169,36 +168,6 @@ startBtnIntro.addEventListener("click", () => {
     introScreen.style.opacity = 0;
     setTimeout(() => { introScreen.style.display = "none"; }, 1000);
     startBtn.click(); // avvia il gioco normalmente
-});
-
-startBtn.addEventListener("click",()=>{
-    if(gameRunning) return;
-    notes=[]; lastBeat=0;
-    score=0; combo=0; totalHits=0; totalPerfect=0;
-
-    const bgImg=new Image();
-    bgImg.src=currentSong.bg;
-    bgImg.onload=()=>{ bg.style.backgroundImage=`url('${currentSong.bg}')`; bg.style.opacity=1; };
-
-    bgm.src=currentSong.mp3;
-    bgm.currentTime=0;
-    bgm.play();
-    gameRunning=true;
-    document.getElementById("menu").style.display="none";
-    difficultyBar.style.display="none";
-
-    for(let i=0;i<columns;i++){
-        let label=document.createElement("div");
-        label.id="label"+i;
-        label.className="columnLabel";
-        label.innerText=columnKeys[i];
-        label.style.bottom="30px";
-        label.style.position="absolute";
-        label.style.left=(i*columnWidth + columnWidth/2) + "px";
-        document.body.appendChild(label);
-    }
-    hitLine.style.opacity=1;
-    requestAnimationFrame(gameLoop);
 });
 
 settingsBtn.addEventListener("click",()=>{keySettings.style.display = keySettings.style.display==="none"?"block":"none";});
