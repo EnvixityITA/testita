@@ -202,14 +202,22 @@ function spawnNotes(time){
     }
 }
 
+// Disegna colonne con highlight centrale in ECHO
 function drawColumns(){
     for(let i=0;i<=columns;i++){
-        ctx.strokeStyle="rgba(255,255,255,0.2)";
+        if(selector.value==="ECHO" && i===2){
+            ctx.strokeStyle="rgba(255,255,255,0.6)";
+            ctx.lineWidth = 4;
+        } else {
+            ctx.strokeStyle="rgba(255,255,255,0.2)";
+            ctx.lineWidth = 1;
+        }
         ctx.beginPath();
         ctx.moveTo(arrowZoneOffset + i*columnWidth,0);
         ctx.lineTo(arrowZoneOffset + i*columnWidth,canvas.height);
         ctx.stroke();
     }
+    ctx.lineWidth = 1;
 }
 
 function drawKeyLabels(){
@@ -233,7 +241,6 @@ document.addEventListener("keydown",e=>{
         if(note.hit)continue;
         let code = columnCodes[note.column];
         if(code==="Space") code="Space";
-        // Finestra più ampia per colpire note
         if(e.code===code && note.y>canvas.height-90-hitLineHeight && note.y<canvas.height-30){
             note.hit=true; combo++; totalHits++;
             const dist=Math.abs(note.y-(canvas.height-70));
@@ -269,8 +276,11 @@ function gameLoop(timestamp){
 
     for(let note of notes){
         if(note.hit)continue;
+        // evidenzia nota centrale in ECHO
+        ctx.fillStyle = (selector.value==="ECHO" && note.column===2) 
+                        ? "#ffff80" 
+                        : columnColors[note.column];
         note.y+=noteSpeed*delta;
-        ctx.fillStyle=columnColors[note.column];
         ctx.fillRect(arrowZoneOffset+note.column*columnWidth+10,note.y,columnWidth-20,50);
         if(note.y>canvas.height-70){
             note.hit=true;
