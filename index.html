@@ -18,7 +18,6 @@ body{margin:0;overflow:hidden;background:black;font-family:Arial;color:white;}
 #score{left:10px;} #combo{left:200px;} #rank{left:360px;}
 .columnLabel{position:absolute;bottom:30px;width:100px;text-align:center;font-size:20px;transform:translateX(-50%);color:white;}
 #hitLine{position:absolute;bottom:70px;width:100%;height:3px;background:white;}
-/* Animazioni */
 @keyframes floatLogo {0%{transform:translateY(0px);}50%{transform:translateY(-15px);}100%{transform:translateY(0px);}}
 @keyframes pulseBtn {0%{transform:scale(1);}50%{transform:scale(1.05);}100%{transform:scale(1);}}
 </style>
@@ -33,6 +32,7 @@ body{margin:0;overflow:hidden;background:black;font-family:Arial;color:white;}
 <select id="songSelector">
 <option value="BIRDBRAIN">BIRDBRAIN</option>
 <option value="Mesmerizer">MESMERIZER</option>
+<option value="Echo">ECHO</option>
 </select>
 <button id="startBtn">START</button>
 </div>
@@ -58,7 +58,8 @@ const columnColors=["#00e5ff","#00ff90","#ff3df2","#ffd500"];
 
 const songs={
 "BIRDBRAIN":{mp3:"BIRDBRAIN.mp3",BPM:140,difficulty:"MEDIO",color:"yellow",speed:400,bg:"immagine_2026-03-03_204259655.png"},
-"Mesmerizer":{mp3:"mesmerizer.mp3",BPM:120,difficulty:"DIFFICILE",color:"red",speed:400*1.75,bg:"immagine_2026-03-03_221829535.png"}
+"Mesmerizer":{mp3:"mesmerizer.mp3",BPM:120,difficulty:"DIFFICILE",color:"red",speed:400*1.75,bg:"immagine_2026-03-03_221829535.png"},
+"Echo":{mp3:"SpotiDownloader.com - Echo (feat. Crusher-P) - The Living Tombstone.mp3",BPM:130,difficulty:"DIFFICILE",color:"red",speed:450,bg:"immagine_2026-03-05_202041367.png"}
 };
 let currentSong=songs["BIRDBRAIN"];
 
@@ -108,7 +109,7 @@ setTimeout(()=>{introScreen.style.display="none"; bgImg.src=currentSong.bg; bgIm
 function generateFullChart(){
 chart=[];
 const BPM=currentSong.BPM;
-const beat=60/BPM;
+const beat=60/currentSong.BPM;
 const duration=bgm.duration;
 for(let t=0;t<duration;t+=beat){
 chart.push({time:t,column:Math.floor(Math.random()*columns)});
