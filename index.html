@@ -75,16 +75,12 @@ body{margin:0;overflow:hidden;background:black;font-family:Arial;color:white;}
 <script>
 const canvas=document.getElementById("gameCanvas");
 const ctx=canvas.getContext("2d");
-canvas.width=window.innerWidth;
-canvas.height=window.innerHeight;
 
-let arrowZoneWidth = canvas.width*0.6;
 let columns = 4;
-let columnWidth = arrowZoneWidth/columns;
-let arrowZoneOffset = (canvas.width-arrowZoneWidth)/2;
-
+let arrowZoneWidth, columnWidth, arrowZoneOffset;
 let columnKeys=[]; 
 const columnColors=[];
+let hitLineHeight = 25;
 
 const bgm=document.getElementById("bgm");
 const bgmMenu=document.getElementById("bgmMenu");
@@ -108,8 +104,6 @@ const tabSongsBtn=document.getElementById("tabSongsBtn");
 const tabKeys=document.getElementById("tabKeys");
 const tabSongs=document.getElementById("tabSongs");
 
-const hitLineHeight=25;
-
 const songs={
 "BIRDBRAIN":{mp3:"BIRDBRAIN.mp3",BPM:140,difficulty:"MEDIO",color:"yellow",speed:300,bg:"immagine_2026-03-03_204259655.png"},
 "Mesmerizer":{mp3:"mesmerizer.mp3",BPM:120,difficulty:"DIFFICILE",color:"red",speed:400*1.75,bg:"immagine_2026-03-03_221829535.png"},
@@ -120,28 +114,40 @@ let currentSong = songs["BIRDBRAIN"];
 let notes=[],chart=[],noteIndex=0,hitRatings=[];
 let score=0,combo=0,totalHits=0,totalPerfect=0,noteSpeed=300,gameRunning=false,lastTime=0;
 
+function resizeCanvas(){
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    arrowZoneWidth = Math.min(canvas.width*0.6, 1200); 
+    columnWidth = arrowZoneWidth / columns;
+    arrowZoneOffset = (canvas.width - arrowZoneWidth)/2;
+
+    hitLineHeight = Math.max(25, canvas.height*0.02);
+
+    drawKeyLabels();
+}
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
+
 function updateColumns(){
-    if(currentSong===songs["ECHO"]){columns=5;} else{columns=4;}
-    arrowZoneWidth = canvas.width*0.6;
-    columnWidth = arrowZoneWidth/columns;
-    arrowZoneOffset = (canvas.width-arrowZoneWidth)/2;
+    columns = (currentSong===songs["ECHO"])?5:4;
+    arrowZoneWidth = Math.min(canvas.width*0.6, 1200);
+    columnWidth = arrowZoneWidth / columns;
+    arrowZoneOffset = (canvas.width - arrowZoneWidth)/2;
 }
 
 function updateColumnKeys(){
-    if(currentSong===songs["ECHO"]){
-        columnKeys = ["D","F","H","J","K"];
-    }else{
-        columnKeys = ["D","F","J","K"];
-    }
+    columnKeys = (currentSong===songs["ECHO"])?["D","F","H","J","K"]:["D","F","J","K"];
 }
 
 function updateNoteColors(){
-    if(currentSong===songs["BIRDBRAIN"]){columnColors.splice(0,4,...["#ff0000","#ff8000","#ff40bf","#ffff00"]);}
-    else if(currentSong===songs["Mesmerizer"]){columnColors.splice(0,4,...["#00ffff","#00bfff","#0080ff","#0040ff"]);}
-    else if(currentSong===songs["ECHO"]){columnColors.splice(0,5,...["#00ff00","#40ff00","#80ff00","#bfff00","#ff00ff"]);}
+    if(currentSong===songs["BIRDBRAIN"]) columnColors.splice(0,4,...["#ff0000","#ff8000","#ff40bf","#ffff00"]);
+    else if(currentSong===songs["Mesmerizer"]) columnColors.splice(0,4,...["#00ffff","#00bfff","#0080ff","#0040ff"]);
+    else if(currentSong===songs["ECHO"]) columnColors.splice(0,5,...["#00ff00","#40ff00","#80ff00","#bfff00","#ff00ff"]);
 }
 
 function drawKeyLabels(){
+    const fontSize = Math.max(18, canvas.width*0.015);
     for(let i=0;i<columns;i++){
         let label=document.getElementById("label"+i);
         if(!label){
@@ -152,7 +158,8 @@ function drawKeyLabels(){
         }
         label.innerText=columnKeys[i] || "";
         label.style.left=(arrowZoneOffset + i*columnWidth + columnWidth/2)+"px";
-        label.style.bottom="30px";
+        label.style.bottom=(canvas.height*0.02)+"px";
+        label.style.fontSize = fontSize + "px";
         label.style.display="block";
     }
     for(let i=columns;i<5;i++){
@@ -170,7 +177,6 @@ function updateSongUI(){
     drawKeyLabels();
 }
 
-// Inizializza subito i tasti di BIRDBRAIN
 updateSongUI();
 
 settingsBtn.onclick=()=>{settingsPanel.style.display = settingsPanel.style.display==="none"?"block":"none";}
@@ -198,7 +204,7 @@ function generateFullChart(){
             let col=Math.floor(Math.random()*5);
             chart.push({time:t,column:col});
             if(Math.random()<0.35){let extraCol=Math.floor(Math.random()*5); chart.push({time:t+beat*0.2,column:extraCol});}
-        }else{chart.push({time:t,column:Math.floor(4*Math.random())});}
+        }else chart.push({time:t,column:Math.floor(4*Math.random())});
     }
 }
 
@@ -241,7 +247,7 @@ for(let i=0;i<5;i++){
 
 function spawnNotes(time){
     while(noteIndex<chart.length && chart[noteIndex].time <= time + 0.1){ 
-        if(chart[noteIndex].time>0){notes.push({y:-50,column:chart[noteIndex].column,hit:false});}
+        if(chart[noteIndex].time>0) notes.push({y:-50,column:chart[noteIndex].column,hit:false});
         noteIndex++;
     }
 }
