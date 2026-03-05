@@ -11,7 +11,7 @@ body{margin:0;overflow:hidden;background:black;font-family:Arial;color:white;}
 #introScreen{position:absolute;width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;background:black;z-index:10;opacity:0;transform:scale(0.95);}
 #logo{width:350px;margin-bottom:20px;filter:drop-shadow(0 0 20px white);position:relative;}
 #songTitle{font-size:32px;margin-bottom:5px;}
-#difficulty{color:#ffd500;margin-bottom:20px;font-size:20px;}
+#difficulty{margin-bottom:20px;font-size:20px;}
 #songSelector{margin-bottom:15px;padding:8px 12px;font-size:18px;}
 #startBtn{padding:10px 20px;font-size:18px;cursor:pointer;background: rgba(255,255,255,0.1);color:white;border:2px solid white;border-radius:6px;}
 #score,#combo,#rank{position:absolute;top:10px;font-size:22px;z-index:5;}
@@ -32,7 +32,7 @@ body{margin:0;overflow:hidden;background:black;font-family:Arial;color:white;}
 <select id="songSelector">
 <option value="BIRDBRAIN">BIRDBRAIN</option>
 <option value="Mesmerizer">MESMERIZER</option>
-<option value="Echo">ECHO</option>
+<option value="ECHO">ECHO</option>
 </select>
 <button id="startBtn">START</button>
 </div>
@@ -57,9 +57,9 @@ const columnCodes=["KeyD","KeyF","KeyJ","KeyK"];
 const columnColors=["#00e5ff","#00ff90","#ff3df2","#ffd500"];
 
 const songs={
-"BIRDBRAIN":{mp3:"BIRDBRAIN.mp3",BPM:140,difficulty:"MEDIO",color:"yellow",speed:400,bg:"immagine_2026-03-03_204259655.png"},
-"Mesmerizer":{mp3:"mesmerizer.mp3",BPM:120,difficulty:"DIFFICILE",color:"red",speed:400*1.75,bg:"immagine_2026-03-03_221829535.png"},
-"Echo":{mp3:"SpotiDownloader.com - Echo (feat. Crusher-P) - The Living Tombstone.mp3",BPM:130,difficulty:"DIFFICILE",color:"red",speed:450,bg:"immagine_2026-03-05_202041367.png"}
+  "BIRDBRAIN":{mp3:"BIRDBRAIN.mp3",BPM:140,difficulty:"MEDIO",color:"yellow",speed:400,bg:"immagine_2026-03-03_204259655.png"},
+  "Mesmerizer":{mp3:"mesmerizer.mp3",BPM:120,difficulty:"DIFFICILE",color:"red",speed:400*1.75,bg:"immagine_2026-03-03_221829535.png"},
+  "ECHO":{mp3:"SpotiDownloader.com - Echo (feat. Crusher-P) - The Living Tombstone.mp3",BPM:130,difficulty:"INSANA",color:"purple",speed:400*2.75,bg:"immagine_2026-03-05_202041367.png"}
 };
 let currentSong=songs["BIRDBRAIN"];
 
@@ -78,191 +78,192 @@ let score=0,combo=0,totalHits=0,totalPerfect=0,noteSpeed=400,gameRunning=false,l
 
 // Menu Animazioni
 window.onload=()=>{
-introScreen.style.transition="opacity 0.7s, transform 0.7s";
-introScreen.style.opacity=1;
-introScreen.style.transform="scale(1)";
-logo.style.animation="floatLogo 2s ease-in-out infinite";
-startBtn.style.animation="pulseBtn 1.5s ease-in-out infinite";
-selector.style.animation="pulseBtn 1.5s ease-in-out infinite";
+  introScreen.style.transition="opacity 0.7s, transform 0.7s";
+  introScreen.style.opacity=1;
+  introScreen.style.transform="scale(1)";
+  logo.style.animation="floatLogo 2s ease-in-out infinite";
+  startBtn.style.animation="pulseBtn 1.5s ease-in-out infinite";
+  selector.style.animation="pulseBtn 1.5s ease-in-out infinite";
 }
 
 // Aggiorna info canzone
 function updateSongUI(){
-document.getElementById("songTitle").innerText=selector.value;
-document.getElementById("difficulty").innerText=currentSong.difficulty.toUpperCase();
-document.getElementById("difficulty").style.color=currentSong.color;
+  document.getElementById("songTitle").innerText=selector.value;
+  const diffElem=document.getElementById("difficulty");
+  diffElem.innerText=currentSong.difficulty.toUpperCase();
+  diffElem.style.color=currentSong.color;
 }
 selector.onchange=()=>{
-currentSong=songs[selector.value];
-updateSongUI();
+  currentSong=songs[selector.value];
+  updateSongUI();
 }
 updateSongUI();
 
 // Start game
 startBtn.onclick=()=>{
-introScreen.style.transition="opacity 0.5s";
-introScreen.style.opacity=0;
-setTimeout(()=>{introScreen.style.display="none"; bgImg.src=currentSong.bg; bgImg.style.opacity=1; startGame();},500);
+  introScreen.style.transition="opacity 0.5s";
+  introScreen.style.opacity=0;
+  setTimeout(()=>{introScreen.style.display="none"; bgImg.src=currentSong.bg; bgImg.style.opacity=1; startGame();},500);
 }
 
 // Chart e note
 function generateFullChart(){
-chart=[];
-const BPM=currentSong.BPM;
-const beat=60/currentSong.BPM;
-const duration=bgm.duration;
-for(let t=0;t<duration;t+=beat){
-chart.push({time:t,column:Math.floor(Math.random()*columns)});
-}
+  chart=[];
+  const BPM=currentSong.BPM;
+  const beat=60/currentSong.BPM;
+  const duration=bgm.duration;
+  for(let t=0;t<duration;t+=beat){
+    chart.push({time:t,column:Math.floor(Math.random()*columns)});
+  }
 }
 
 function startGame(){
-notes=[]; chart=[]; noteIndex=0;
-score=0; combo=0; totalHits=0; totalPerfect=0;
-noteSpeed=currentSong.speed;
-bgm.src=currentSong.mp3; bgm.currentTime=0;
-bgm.onloadedmetadata=()=>{
-generateFullChart();
-bgm.play();
-gameRunning=true;
-lastTime=0;
-requestAnimationFrame(gameLoop);
-}
+  notes=[]; chart=[]; noteIndex=0;
+  score=0; combo=0; totalHits=0; totalPerfect=0;
+  noteSpeed=currentSong.speed;
+  bgm.src=currentSong.mp3; bgm.currentTime=0;
+  bgm.onloadedmetadata=()=>{
+    generateFullChart();
+    bgm.play();
+    gameRunning=true;
+    lastTime=0;
+    requestAnimationFrame(gameLoop);
+  }
 }
 
 // Particles
 let particles=[];
 function spawnParticles(x,y,color){
-for(let i=0;i<12;i++){
-particles.push({x:x,y:y,vx:(Math.random()-0.5)*6,vy:(Math.random()-0.5)*6,life:1,color:color});
-}
+  for(let i=0;i<12;i++){
+    particles.push({x:x,y:y,vx:(Math.random()-0.5)*6,vy:(Math.random()-0.5)*6,life:1,color:color});
+  }
 }
 
 // Key press
 document.addEventListener("keydown",e=>{
-if(!gameRunning)return;
-for(let note of notes){
-if(note.hit)continue;
-if(e.code===columnCodes[note.column] && note.y>canvas.height-120 && note.y<canvas.height-40){
-note.hit=true; combo++; totalHits++;
-const dist=Math.abs(note.y-(canvas.height-70));
-if(dist<5) totalPerfect++;
-score+=100*(1+combo*0.05);
+  if(!gameRunning)return;
+  for(let note of notes){
+    if(note.hit)continue;
+    if(e.code===columnCodes[note.column] && note.y>canvas.height-120 && note.y<canvas.height-40){
+      note.hit=true; combo++; totalHits++;
+      const dist=Math.abs(note.y-(canvas.height-70));
+      if(dist<5) totalPerfect++;
+      score+=100*(1+combo*0.05);
 
-// Rating come PNG
-let rating="MEH";
-if(dist<5) rating="PERFECT";
-else if(dist<10) rating="SICK";
-else if(dist<20) rating="AWESOME";
-else if(dist<35) rating="NICE";
-const img=new Image();
-img.src=rating+".png";
-hitRatings.push({img:img,x:note.column*columnWidth+columnWidth/2,y:canvas.height-120,alpha:1});
+      // Rating come PNG
+      let rating="MEH";
+      if(dist<5) rating="PERFECT";
+      else if(dist<10) rating="SICK";
+      else if(dist<20) rating="AWESOME";
+      else if(dist<35) rating="NICE";
+      const img=new Image();
+      img.src=rating+".png";
+      hitRatings.push({img:img,x:note.column*columnWidth+columnWidth/2,y:canvas.height-120,alpha:1});
 
-spawnParticles(note.column*columnWidth+columnWidth/2,canvas.height-70,columnColors[note.column]);
-updateRank();
-}
-}
+      spawnParticles(note.column*columnWidth+columnWidth/2,canvas.height-70,columnColors[note.column]);
+      updateRank();
+    }
+  }
 });
 
 function updateRank(){
-if(totalHits==0)return;
-const acc=totalPerfect/totalHits;
-let rank="F";
-if(acc>0.95) rank="S";
-else if(acc>0.85) rank="A";
-else if(acc>0.7) rank="B";
-else if(acc>0.55) rank="C";
-else if(acc>0.4) rank="D";
-rankDisplay.innerText="Rank: "+rank;
+  if(totalHits==0)return;
+  const acc=totalPerfect/totalHits;
+  let rank="F";
+  if(acc>0.95) rank="S";
+  else if(acc>0.85) rank="A";
+  else if(acc>0.7) rank="B";
+  else if(acc>0.55) rank="C";
+  else if(acc>0.4) rank="D";
+  rankDisplay.innerText="Rank: "+rank;
 }
 
 // Spawn note
 function spawnNotes(time){
-while(noteIndex<chart.length && chart[noteIndex].time-2<=time){
-notes.push({y:-50,column:chart[noteIndex].column,hit:false});
-noteIndex++;
-}
+  while(noteIndex<chart.length && chart[noteIndex].time-2<=time){
+    notes.push({y:-50,column:chart[noteIndex].column,hit:false});
+    noteIndex++;
+  }
 }
 
 // Draw columns & labels
 function drawColumns(){
-for(let i=1;i<columns;i++){
-ctx.strokeStyle="rgba(255,255,255,0.2)";
-ctx.beginPath();
-ctx.moveTo(i*columnWidth,0);
-ctx.lineTo(i*columnWidth,canvas.height);
-ctx.stroke();
-}
+  for(let i=1;i<columns;i++){
+    ctx.strokeStyle="rgba(255,255,255,0.2)";
+    ctx.beginPath();
+    ctx.moveTo(i*columnWidth,0);
+    ctx.lineTo(i*columnWidth,canvas.height);
+    ctx.stroke();
+  }
 }
 
 function drawKeyLabels(){
-for(let i=0;i<columns;i++){
-let label=document.getElementById("label"+i);
-if(!label){
-label=document.createElement("div");
-label.id="label"+i;
-label.className="columnLabel";
-label.innerText=columnKeys[i];
-document.body.appendChild(label);
-}
-label.style.left=(i*columnWidth+columnWidth/2)+"px";
-}
+  for(let i=0;i<columns;i++){
+    let label=document.getElementById("label"+i);
+    if(!label){
+      label=document.createElement("div");
+      label.id="label"+i;
+      label.className="columnLabel";
+      label.innerText=columnKeys[i];
+      document.body.appendChild(label);
+    }
+    label.style.left=(i*columnWidth+columnWidth/2)+"px";
+  }
 }
 
 // Main loop
 function gameLoop(timestamp){
-if(!gameRunning)return;
-const delta=(timestamp-lastTime)/1000;
-lastTime=timestamp;
+  if(!gameRunning)return;
+  const delta=(timestamp-lastTime)/1000;
+  lastTime=timestamp;
 
-spawnNotes(bgm.currentTime);
+  spawnNotes(bgm.currentTime);
 
-ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 
-drawColumns();
-drawKeyLabels();
+  drawColumns();
+  drawKeyLabels();
 
-// Sfondo pulsante
-const beat = 60/currentSong.BPM;
-const pulse = Math.sin((bgm.currentTime/beat)*Math.PI*2);
-bgImg.style.transform = "scale("+(1+pulse*0.02)+")";
+  // Sfondo pulsante a ritmo BPM
+  const beat = 60/currentSong.BPM;
+  const pulse = Math.sin((bgm.currentTime/beat)*Math.PI*2);
+  bgImg.style.transform = "scale("+(1+pulse*0.02)+")";
 
-// Draw notes
-for(let note of notes){
-if(note.hit)continue;
-note.y+=noteSpeed*delta;
-ctx.fillStyle=columnColors[note.column];
-ctx.fillRect(note.column*columnWidth+10,note.y,columnWidth-20,50);
-if(note.y>canvas.height-70){ note.hit=true; combo=0; }
-}
+  // Draw notes
+  for(let note of notes){
+    if(note.hit)continue;
+    note.y+=noteSpeed*delta;
+    ctx.fillStyle=columnColors[note.column];
+    ctx.fillRect(note.column*columnWidth+10,note.y,columnWidth-20,50);
+    if(note.y>canvas.height-70){ note.hit=true; combo=0; }
+  }
 
-// Draw particles
-for(let i=particles.length-1;i>=0;i--){
-const p=particles[i];
-ctx.globalAlpha=p.life;
-ctx.fillStyle=p.color;
-ctx.beginPath();
-ctx.arc(p.x,p.y,4,0,Math.PI*2);
-ctx.fill();
-p.x+=p.vx; p.y+=p.vy; p.life-=0.03;
-if(p.life<=0)particles.splice(i,1);
-}
+  // Draw particles
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    ctx.globalAlpha=p.life;
+    ctx.fillStyle=p.color;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,4,0,Math.PI*2);
+    ctx.fill();
+    p.x+=p.vx; p.y+=p.vy; p.life-=0.03;
+    if(p.life<=0)particles.splice(i,1);
+  }
 
-// Draw rating images
-for(let i=hitRatings.length-1;i>=0;i--){
-const r=hitRatings[i];
-ctx.globalAlpha=r.alpha;
-ctx.drawImage(r.img,r.x-50,r.y-25,100,50);
-r.y-=1; r.alpha-=0.02;
-if(r.alpha<=0) hitRatings.splice(i,1);
-}
-ctx.globalAlpha=1;
+  // Draw rating images
+  for(let i=hitRatings.length-1;i>=0;i--){
+    const r=hitRatings[i];
+    ctx.globalAlpha=r.alpha;
+    ctx.drawImage(r.img,r.x-50,r.y-25,100,50);
+    r.y-=1; r.alpha-=0.02;
+    if(r.alpha<=0) hitRatings.splice(i,1);
+  }
+  ctx.globalAlpha=1;
 
-scoreDisplay.innerText="Punti: "+Math.floor(score);
-comboDisplay.innerText="Combo: "+combo+"x";
+  scoreDisplay.innerText="Punti: "+Math.floor(score);
+  comboDisplay.innerText="Combo: "+combo+"x";
 
-requestAnimationFrame(gameLoop);
+  requestAnimationFrame(gameLoop);
 }
 </script>
 </body>
