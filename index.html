@@ -83,7 +83,7 @@ let columns = 4;
 let columnWidth = arrowZoneWidth/columns;
 let arrowZoneOffset = (canvas.width-arrowZoneWidth)/2;
 
-let columnKeys=["D","F","H","J","K"];  // H centrale
+let columnKeys=["D","F","H","J","K"];
 let columnCodes=["KeyD","KeyF","KeyH","KeyJ","KeyK"];
 let columnColors=[];
 
@@ -150,19 +150,19 @@ function updateSongUI(){
     updateColumns();
 }
 
-// Gestione tab impostazioni
+// Tabs impostazioni
 settingsBtn.onclick=()=>{settingsPanel.style.display = settingsPanel.style.display==="none"?"block":"none";}
 tabKeysBtn.onclick=()=>{tabKeys.style.display="block"; tabSongs.style.display="none";}
 tabSongsBtn.onclick=()=>{tabKeys.style.display="none"; tabSongs.style.display="block";}
 
-// Gestione volume
+// Volume
 document.getElementById("volumeSlider").oninput=function(){bgm.volume=this.value;};
 
 // Sincronizza selector2 con selector principale
 selector.onchange=function(){currentSong=songs[selector.value]; selector2.value=selector.value; updateSongUI();}
 selector2.onchange=function(){currentSong=songs[selector2.value]; selector.value=selector2.value; updateSongUI();}
 
-// Chart generatore
+// Chart generator
 function generateFullChart(){
     chart=[];
     const BPM=currentSong.BPM;
@@ -211,7 +211,7 @@ function startGame(){
     }
 }
 
-// Key settings (fix tasto centrale H)
+// Key settings
 for(let i=0;i<5;i++){
     document.getElementById("col"+i).addEventListener("click",()=>{
         let currentKey = columnKeys[i];
@@ -233,7 +233,6 @@ function spawnNotes(time){
     }
 }
 
-// Disegna colonne
 function drawColumns(){
     for(let i=0;i<=columns;i++){
         ctx.strokeStyle="rgba(255,255,255,0.2)";
@@ -245,7 +244,6 @@ function drawColumns(){
     }
 }
 
-// Mostra tasti sotto colonne
 function drawKeyLabels(){
     for(let i=0;i<columns;i++){
         let label=document.getElementById("label"+i);
@@ -256,7 +254,7 @@ function drawKeyLabels(){
             document.body.appendChild(label);
         }
         if(currentSong===songs["ECHO"]){
-            let labelsMap=["D","F","H","J","K"];  // H centrale
+            let labelsMap=["D","F","H","J","K"];
             label.innerText = labelsMap[i];
         } else {
             let labelsMap=["D","F","J","K"];
@@ -267,22 +265,24 @@ function drawKeyLabels(){
     }
 }
 
-// Input tastiera
+// Key input con hit window più permissiva
 document.addEventListener("keydown",e=>{
     if(!gameRunning)return;
+    const hitWindowTop = canvas.height - 90;
+    const hitWindowBottom = canvas.height - 30;
     for(let note of notes){
         if(note.hit)continue;
         let code=columnCodes[note.column];
-        if(e.code===code){
-            note.hit=true; combo++; totalHits++;
-            const dist=Math.abs(note.y-(canvas.height-70));
-            if(dist<5) totalPerfect++;
-            score+=100*(1+combo*0.05);
-            let rating="MEH";
-            if(dist<5) rating="PERFECT";
-            else if(dist<10) rating="SICK";
-            else if(dist<20) rating="AWESOME";
-            else if(dist<35) rating="NICE";
+        if(e.code===code && note.y >= hitWindowTop && note.y <= hitWindowBottom){
+            note.hit = true; combo++; totalHits++;
+            const dist = Math.abs(note.y - (canvas.height - 70));
+            if(dist < 15) totalPerfect++;  
+            score += 100 * (1 + combo*0.05);
+            let rating = "MEH";
+            if(dist < 10) rating="PERFECT";
+            else if(dist < 20) rating="SICK";
+            else if(dist < 35) rating="AWESOME";
+            else rating="NICE";
             const img=new Image();
             img.src=rating+".png";
             hitRatings.push({img:img,x:arrowZoneOffset+note.column*columnWidth+columnWidth/2,y:canvas.height-120,alpha:1});
@@ -290,7 +290,6 @@ document.addEventListener("keydown",e=>{
     }
 });
 
-// Loop di gioco
 function gameLoop(timestamp){
     if(!gameRunning)return;
     const delta=(timestamp-lastTime)/1000;
