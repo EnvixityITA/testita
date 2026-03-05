@@ -1,77 +1,3 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VOCALOID</title>
-<style>
-body{margin:0;overflow:hidden;background:black;font-family:Arial;color:white;}
-#bgImg{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;opacity:0;transition:opacity 1s;filter:blur(6px) brightness(0.45);}
-#gameCanvas{position:absolute;width:100%;height:100%;z-index:1;}
-#introScreen{position:absolute;width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;background:black;z-index:10;opacity:1;transition:opacity 0.5s;}
-#logo{width:350px;margin-bottom:20px;filter:drop-shadow(0 0 20px white);}
-#songTitle{font-size:32px;margin-bottom:5px;}
-#difficulty{margin-bottom:20px;font-size:20px;}
-#startBtn,#settingsBtn{padding:10px 20px;font-size:18px;cursor:pointer;background: rgba(255,255,255,0.1);color:white;border:2px solid white;border-radius:6px;margin:5px;}
-#score,#combo,#rank{position:absolute;top:10px;font-size:22px;z-index:5;}
-#score{left:10px;} #combo{left:200px;} #rank{left:360px;}
-.columnLabel{position:absolute;font-size:20px;text-align:center;transform:translateX(-50%);color:white;}
-#settingsPanel{position:absolute;top:50px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);padding:15px;border-radius:8px;display:none;z-index:20;min-width:300px;}
-#settingsTabs button{margin-right:10px;padding:5px 10px;cursor:pointer;}
-#tabContent{margin-top:10px;}
-#keySettings td{border:1px solid rgba(255,255,255,0.3);padding:8px 15px;text-align:center;cursor:pointer;color:white;font-weight:bold;}
-#keySettings td:hover{background:rgba(255,255,255,0.2);}
-</style>
-</head>
-<body>
-
-<img id="bgImg">
-<div id="introScreen">
-<img id="logo" src="Risorsa_1sinny.png" alt="Logo">
-<h1 id="songTitle">BIRDBRAIN</h1>
-<div id="difficulty"></div>
-<select id="songSelector">
-<option value="BIRDBRAIN">BIRDBRAIN</option>
-<option value="Mesmerizer">MESMERIZER</option>
-<option value="ECHO">ECHO</option>
-</select>
-<button id="startBtn">START</button>
-<button id="settingsBtn">IMPOSTAZIONI</button>
-</div>
-
-<div id="settingsPanel">
-<div id="settingsTabs">
-<button id="tabKeysBtn">Tasti e Volume</button>
-<button id="tabSongsBtn">Selezione Canzoni</button>
-</div>
-<div id="tabContent">
-<div id="tabKeys">
-<table id="keySettings"><tr>
-<td id="col0">D</td>
-<td id="col1">F</td>
-<td id="col2">H</td>
-<td id="col3">J</td>
-<td id="col4">K</td>
-</tr></table>
-<div style="margin-top:10px;">Volume: <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.5"></div>
-</div>
-<div id="tabSongs" style="display:none;">
-<select id="songSelector2">
-<option value="BIRDBRAIN">BIRDBRAIN</option>
-<option value="Mesmerizer">MESMERIZER</option>
-<option value="ECHO">ECHO</option>
-</select>
-</div>
-</div>
-</div>
-
-<canvas id="gameCanvas"></canvas>
-<div id="score">Punti: 0</div>
-<div id="combo">Combo: 0x</div>
-<div id="rank">Rank: F</div>
-<audio id="bgm"></audio>
-<audio id="bgmMenu" loop></audio>
-
 <script>
 const canvas=document.getElementById("gameCanvas");
 const ctx=canvas.getContext("2d");
@@ -83,7 +9,7 @@ let columns = 4;
 let columnWidth = arrowZoneWidth/columns;
 let arrowZoneOffset = (canvas.width-arrowZoneWidth)/2;
 
-let columnKeys=[]; // verrà impostato dinamicamente
+let columnKeys=[]; 
 const columnColors=[];
 
 const bgm=document.getElementById("bgm");
@@ -111,14 +37,14 @@ const tabSongs=document.getElementById("tabSongs");
 const hitLineHeight=25;
 
 const songs={
-"BIRDBRAIN":{mp3:"BIRDBRAIN.mp3",BPM:140,difficulty:"MEDIO",color:"yellow",speed:400,bg:"immagine_2026-03-03_204259655.png"},
+"BIRDBRAIN":{mp3:"BIRDBRAIN.mp3",BPM:140,difficulty:"MEDIO",color:"yellow",speed:300,bg:"immagine_2026-03-03_204259655.png"},
 "Mesmerizer":{mp3:"mesmerizer.mp3",BPM:120,difficulty:"DIFFICILE",color:"red",speed:400*1.75,bg:"immagine_2026-03-03_221829535.png"},
 "ECHO":{mp3:"SpotiDownloader.com - Echo (feat. Crusher-P) - The Living Tombstone.mp3",BPM:130,difficulty:"INSANA",color:"purple",speed:400*1.85,bg:"immagine_2026-03-05_202041367.png"}
 };
 
 let currentSong = songs["BIRDBRAIN"];
 let notes=[],chart=[],noteIndex=0,hitRatings=[];
-let score=0,combo=0,totalHits=0,totalPerfect=0,noteSpeed=400,gameRunning=false,lastTime=0;
+let score=0,combo=0,totalHits=0,totalPerfect=0,noteSpeed=300,gameRunning=false,lastTime=0;
 
 function updateColumns(){
     if(currentSong===songs["ECHO"]){columns=5;} else{columns=4;}
@@ -147,6 +73,7 @@ function updateSongUI(){
     document.getElementById("difficulty").style.color=currentSong.color;
     updateColumns();
     updateColumnKeys();
+    drawKeyLabels();
 }
 
 settingsBtn.onclick=()=>{settingsPanel.style.display = settingsPanel.style.display==="none"?"block":"none";}
@@ -167,7 +94,6 @@ selector2.onchange=function(){
 
 function generateFullChart(){
     chart=[];
-    const BPM=currentSong.BPM;
     const beat=60/currentSong.BPM;
     const duration=bgm.duration||120;
     for(let t=beat; t<duration; t+=beat){
@@ -245,13 +171,19 @@ function drawKeyLabels(){
         label.innerText=columnKeys[i] || "";
         label.style.left=(arrowZoneOffset + i*columnWidth + columnWidth/2)+"px";
         label.style.bottom="30px";
+        label.style.display="block";
+    }
+    // Nasconde eventuali label extra
+    for(let i=columns;i<5;i++){
+        let label=document.getElementById("label"+i);
+        if(label) label.style.display="none";
     }
 }
 
 document.addEventListener("keydown",e=>{
     if(!gameRunning)return;
-    const hitWindowTop = canvas.height - 90;
-    const hitWindowBottom = canvas.height - 30;
+    const hitWindowTop = canvas.height - 120; // più facile da hittare
+    const hitWindowBottom = canvas.height - 20;
     for(let note of notes){
         if(note.hit)continue;
         let expectedKey = columnKeys[note.column];
@@ -295,7 +227,7 @@ function gameLoop(timestamp){
             totalHits++;
             const img=new Image();
             img.src = "MISS.png";
-            hitRatings.push({img:img,x:arrowZoneOffset+note.column*columnWidth+columnWidth/2,y:missThreshold,alpha:1});
+            hitRatings.push({img:img,x:arrowZoneOffset+note.column*columnWidth+columnWidth/2,y=missThreshold,alpha:1});
         }
     }
     for(let i=hitRatings.length-1;i>=0;i--){
@@ -311,5 +243,3 @@ function gameLoop(timestamp){
     requestAnimationFrame(gameLoop);
 }
 </script>
-</body>
-</html>
