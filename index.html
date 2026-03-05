@@ -17,8 +17,9 @@ body{margin:0;overflow:hidden;background:black;font-family:Arial;color:white;}
 #score,#combo,#rank{position:absolute;top:10px;font-size:22px;z-index:5;}
 #score{left:10px;} #combo{left:200px;} #rank{left:360px;}
 .columnLabel{position:absolute;font-size:20px;text-align:center;transform:translateX(-50%);color:white;}
-@keyframes floatLogo {0%{transform:translateY(0px);}50%{transform:translateY(-15px);}100%{transform:translateY(0px);}}
-@keyframes pulseBtn {0%{transform:scale(1);}50%{transform:scale(1.05);}100%{transform:scale(1);}}
+#keySettings{position:absolute;top:60px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);padding:10px 15px;border-radius:8px;display:none;z-index:20;}
+#keySettings td{border:1px solid rgba(255,255,255,0.3);padding:8px 15px;text-align:center;cursor:pointer;color:white;font-weight:bold;}
+#keySettings td:hover{background:rgba(255,255,255,0.2);}
 </style>
 </head>
 <body>
@@ -36,6 +37,17 @@ body{margin:0;overflow:hidden;background:black;font-family:Arial;color:white;}
 <button id="startBtn">START</button>
 </div>
 
+<div id="keySettings">
+<table><tr>
+<td id="col0">D</td>
+<td id="col1">F</td>
+<td id="col2">J</td>
+<td id="col3">K</td>
+<td id="col4">Space</td>
+</tr></table>
+<small>Clicca su un tasto per cambiarlo</small>
+</div>
+
 <canvas id="gameCanvas"></canvas>
 <div id="score">Punti: 0</div>
 <div id="combo">Combo: 0x</div>
@@ -48,21 +60,47 @@ const ctx=canvas.getContext("2d");
 canvas.width=window.innerWidth;
 canvas.height=window.innerHeight;
 
-// Zona frecce più stretta
-const arrowZoneWidth = canvas.width*0.6;
-const columnWidth = arrowZoneWidth/4;
-const arrowZoneOffset = (canvas.width-arrowZoneWidth)/2;
+let arrowZoneWidth = canvas.width*0.6;
+let columns = 4;
+let columnWidth = arrowZoneWidth/columns;
+let arrowZoneOffset = (canvas.width-arrowZoneWidth)/2;
 
-const columnKeys=["D","F","J","K"];
-const columnCodes=["KeyD","KeyF","KeyJ","KeyK"];
-let columnColors = [];
+// Colonne e tasti
+let columnKeys=["D","F","J","K"];
+let columnCodes=["KeyD","KeyF","KeyJ","KeyK"];
+let columnColors=[];
 
+// Aggiungi quinta colonna solo per ECHO
+function updateColumns(){
+columns = (selector.value==="ECHO")?5:4;
+arrowZoneWidth = canvas.width*0.6;
+columnWidth = arrowZoneWidth/columns;
+arrowZoneOffset = (canvas.width-arrowZoneWidth)/2;
+}
+
+// Imposta colori note
+function updateNoteColors(){
+const t=bgm.currentTime;
+if(selector.value==="BIRDBRAIN"){
+columnColors = ["#ff0000","#ff8000","#ff40bf","#ffff00"];
+} else if(selector.value==="Mesmerizer"){
+if(t<bgm.duration/2){
+columnColors = ["#00ffff","#00bfff","#0080ff","#0040ff"];
+} else {
+columnColors = ["#ff0000","#ff8000","#ff40bf","#ffff00"];
+}
+} else if(selector.value==="ECHO"){
+columnColors = ["#00ff00","#40ff00","#80ff00","#bfff00","#ff00ff"];
+}
+}
+
+// Canzoni
 const songs={
 "BIRDBRAIN":{mp3:"BIRDBRAIN.mp3",BPM:140,difficulty:"MEDIO",color:"yellow",speed:400,bg:"immagine_2026-03-03_204259655.png"},
 "Mesmerizer":{mp3:"mesmerizer.mp3",BPM:120,difficulty:"DIFFICILE",color:"red",speed:400*1.75,bg:"immagine_2026-03-03_221829535.png"},
 "ECHO":{mp3:"SpotiDownloader.com - Echo (feat. Crusher-P) - The Living Tombstone.mp3",BPM:130,difficulty:"INSANA",color:"purple",speed:400*2.75,bg:"immagine_2026-03-05_202041367.png"}
 };
-let currentSong=songs["BIRDBRAIN"];
+let currentSong = songs["BIRDBRAIN"];
 
 const bgm=document.getElementById("bgm");
 const bgImg=document.getElementById("bgImg");
@@ -76,24 +114,14 @@ const startBtn=document.getElementById("startBtn");
 
 let notes=[],chart=[],noteIndex=0,hitRatings=[];
 let score=0,combo=0,totalHits=0,totalPerfect=0,noteSpeed=400,gameRunning=false,lastTime=0;
-const hitLineHeight = 15; // altezza rettangolo hit
-
-// Animazioni menu
-window.onload=()=>{
-introScreen.style.transition="opacity 0.7s, transform 0.7s";
-introScreen.style.opacity=1;
-introScreen.style.transform="scale(1)";
-logo.style.animation="floatLogo 2s ease-in-out infinite";
-startBtn.style.animation="pulseBtn 1.5s ease-in-out infinite";
-selector.style.animation="pulseBtn 1.5s ease-in-out infinite";
-}
+const hitLineHeight = 15;
 
 // Aggiorna UI
 function updateSongUI(){
 document.getElementById("songTitle").innerText=selector.value;
-const diffElem=document.getElementById("difficulty");
-diffElem.innerText=currentSong.difficulty.toUpperCase();
-diffElem.style.color=currentSong.color;
+document.getElementById("difficulty").innerText=currentSong.difficulty.toUpperCase();
+document.getElementById("difficulty").style.color=currentSong.color;
+updateColumns();
 }
 selector.onchange=()=>{
 currentSong=songs[selector.value];
@@ -101,20 +129,16 @@ updateSongUI();
 }
 updateSongUI();
 
-// Colori note dinamici
-function updateNoteColors(){
-  const t = bgm.currentTime;
-  if(selector.value==="BIRDBRAIN"){
-    columnColors = ["#ff0000","#ff8000","#ff40bf","#ffff00"]; // Teto
-  } else if(selector.value==="Mesmerizer"){
-    if(t < bgm.duration/2){
-      columnColors = ["#00ffff","#00bfff","#0080ff","#0040ff"]; // Miku
-    } else {
-      columnColors = ["#ff0000","#ff8000","#ff40bf","#ffff00"]; // Teto
-    }
-  } else if(selector.value==="ECHO"){
-    columnColors = ["#00ff00","#40ff00","#80ff00","#bfff00"]; // Gumi
-  }
+// Chart generico
+function generateFullChart(){
+chart=[];
+const BPM=currentSong.BPM;
+const beat=60/currentSong.BPM;
+const duration=bgm.duration;
+for(let t=0;t<duration;t+=beat){
+let col=Math.floor(columns*Math.random());
+chart.push({time:t,column:col});
+}
 }
 
 // Start game
@@ -127,17 +151,6 @@ bgImg.src=currentSong.bg;
 bgImg.style.opacity=1; 
 startGame();
 },500);
-}
-
-// Chart generico
-function generateFullChart(){
-chart=[];
-const BPM=currentSong.BPM;
-const beat=60/currentSong.BPM;
-const duration=bgm.duration;
-for(let t=0;t<duration;t+=beat){
-chart.push({time:t,column:Math.floor(4*Math.random())});
-}
 }
 
 function startGame(){
@@ -154,56 +167,19 @@ requestAnimationFrame(gameLoop);
 }
 }
 
-// Particles
-let particles=[];
-function spawnParticles(x,y,color){
-for(let i=0;i<12;i++){
-particles.push({x:x,y:y,vx:(Math.random()-0.5)*6,vy:(Math.random()-0.5)*6,life:1,color:color});
-}
-}
-
-// Key press
-document.addEventListener("keydown",e=>{
-if(!gameRunning)return;
-for(let note of notes){
-if(note.hit)continue;
-if(e.code===columnCodes[note.column] && note.y>canvas.height-70-hitLineHeight && note.y<canvas.height-40){
-note.hit=true; combo++; totalHits++;
-const dist=Math.abs(note.y-(canvas.height-70));
-if(dist<5) totalPerfect++;
-score+=100*(1+combo*0.05);
-
-// Rating PNG
-let rating="MEH";
-if(dist<5) rating="PERFECT";
-else if(dist<10) rating="SICK";
-else if(dist<20) rating="AWESOME";
-else if(dist<35) rating="NICE";
-const img=new Image();
-img.src=rating+".png";
-hitRatings.push({img:img,x:arrowZoneOffset+note.column*columnWidth+columnWidth/2,y:canvas.height-120,alpha:1});
-
-spawnParticles(arrowZoneOffset+note.column*columnWidth+columnWidth/2,canvas.height-70,columnColors[note.column]);
-updateRank();
-}
-}
+// Key settings
+const keySettings=document.getElementById("keySettings");
+startBtn.addEventListener("click",()=>{keySettings.style.display = keySettings.style.display==="none"?"block":"none";});
+for(let i=0;i<5;i++){
+document.getElementById("col"+i).addEventListener("click",()=>{
+const newKey=prompt("Inserisci nuovo tasto per colonna "+(i+1), columnKeys[i]||"Space");
+if(newKey){ columnKeys[i]=newKey.toUpperCase(); columnCodes[i]= newKey===" "?"Space":"Key"+newKey.toUpperCase(); document.getElementById("col"+i).innerText=columnKeys[i]; }
 });
-
-function updateRank(){
-if(totalHits==0)return;
-const acc=totalPerfect/totalHits;
-let rank="F";
-if(acc>0.95) rank="S";
-else if(acc>0.85) rank="A";
-else if(acc>0.7) rank="B";
-else if(acc>0.55) rank="C";
-else if(acc>0.4) rank="D";
-rankDisplay.innerText="Rank: "+rank;
 }
 
 // Spawn note
 function spawnNotes(time){
-while(noteIndex<chart.length && chart[noteIndex].time-2<=time){
+while(noteIndex<chart.length && chart[noteIndex].time <= time){
 notes.push({y:-50,column:chart[noteIndex].column,hit:false});
 noteIndex++;
 }
@@ -211,7 +187,7 @@ noteIndex++;
 
 // Draw columns & labels
 function drawColumns(){
-for(let i=0;i<=4;i++){
+for(let i=0;i<=columns;i++){
 ctx.strokeStyle="rgba(255,255,255,0.2)";
 ctx.beginPath();
 ctx.moveTo(arrowZoneOffset + i*columnWidth,0);
@@ -221,7 +197,7 @@ ctx.stroke();
 }
 
 function drawKeyLabels(){
-for(let i=0;i<4;i++){
+for(let i=0;i<columns;i++){
 let label=document.getElementById("label"+i);
 if(!label){
 label=document.createElement("div");
@@ -235,6 +211,30 @@ label.style.bottom="30px";
 }
 }
 
+// Key press
+document.addEventListener("keydown",e=>{
+if(!gameRunning)return;
+for(let note of notes){
+if(note.hit)continue;
+let code = columnCodes[note.column];
+if(code==="Space") code="Space";
+if(e.code===code && note.y>canvas.height-70-hitLineHeight && note.y<canvas.height-40){
+note.hit=true; combo++; totalHits++;
+const dist=Math.abs(note.y-(canvas.height-70));
+if(dist<5) totalPerfect++;
+score+=100*(1+combo*0.05);
+let rating="MEH";
+if(dist<5) rating="PERFECT";
+else if(dist<10) rating="SICK";
+else if(dist<20) rating="AWESOME";
+else if(dist<35) rating="NICE";
+const img=new Image();
+img.src=rating+".png";
+hitRatings.push({img:img,x:arrowZoneOffset+note.column*columnWidth+columnWidth/2,y:canvas.height-120,alpha:1});
+}
+}
+});
+
 // Main loop
 function gameLoop(timestamp){
 if(!gameRunning)return;
@@ -245,52 +245,31 @@ updateNoteColors();
 spawnNotes(bgm.currentTime);
 
 ctx.clearRect(0,0,canvas.width,canvas.height);
-
-// Rettangolo hit trasparente
 ctx.fillStyle = "rgba(255,255,255,0.2)";
 ctx.fillRect(arrowZoneOffset, canvas.height - 70 - hitLineHeight/2, arrowZoneWidth, hitLineHeight);
 
 drawColumns();
 drawKeyLabels();
 
-// Sfondo pulsante
 const beat = 60/currentSong.BPM;
 const pulse = Math.sin((bgm.currentTime/beat)*Math.PI*2);
 bgImg.style.transform = "scale("+(1+pulse*0.02)+")";
 
-// Draw notes
 for(let note of notes){
 if(note.hit)continue;
 note.y+=noteSpeed*delta;
 ctx.fillStyle=columnColors[note.column];
 ctx.fillRect(arrowZoneOffset+note.column*columnWidth+10,note.y,columnWidth-20,50);
-
-// Miss
 if(note.y>canvas.height-70){
 note.hit=true;
 combo=0;
-totalHits++; // miss
-
+totalHits++;
 const img=new Image();
 img.src="MISS.png";
 hitRatings.push({img:img,x:arrowZoneOffset+note.column*columnWidth+columnWidth/2,y:canvas.height-70,alpha:1});
 }
 }
 
-// Particles
-for(let i=particles.length-1;i>=0;i--){
-const p=particles[i];
-ctx.globalAlpha=p.life;
-ctx.fillStyle=p.color;
-ctx.beginPath();
-ctx.arc(p.x,p.y,4,0,Math.PI*2);
-ctx.fill();
-p.x+=p.vx; p.y+=p.vy; p.life-=0.03;
-if(p.life<=0)particles.splice(i,1);
-}
-ctx.globalAlpha=1;
-
-// Rating images
 for(let i=hitRatings.length-1;i>=0;i--){
 const r=hitRatings[i];
 ctx.globalAlpha=r.alpha;
@@ -298,6 +277,7 @@ ctx.drawImage(r.img,r.x-50,r.y-25,100,50);
 r.y-=1; r.alpha-=0.02;
 if(r.alpha<=0) hitRatings.splice(i,1);
 }
+ctx.globalAlpha=1;
 
 scoreDisplay.innerText="Punti: "+Math.floor(score);
 comboDisplay.innerText="Combo: "+combo+"x";
