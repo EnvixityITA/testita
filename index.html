@@ -167,13 +167,13 @@ document.getElementById("volumeSlider").oninput=function(){bgm.volume=this.value
 selector.onchange=function(){ currentSong=songs[selector.value]; selector2.value=selector.value; updateSongUI(); }
 selector2.onchange=function(){ currentSong=songs[selector2.value]; selector.value=selector2.value; updateSongUI(); }
 
-// --- Pulsazione logo ---
+// --- Pulsazione logo più soft ---
 let introBeatTime=0, lastIntroTime=0;
 function animateLogoBeat(delta){
     introBeatTime += delta;
     const beatInterval = 60 / introBPM;
     const phase = (introBeatTime % beatInterval)/beatInterval;
-    const scale = 1 + 0.1 * Math.sin(phase * 2 * Math.PI);
+    const scale = 1 + 0.03 * Math.sin(phase * 2 * Math.PI); // solo ±3%
     logo.style.transform = `scale(${scale})`;
 }
 function introLoop(timestamp){
