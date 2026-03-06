@@ -115,6 +115,8 @@ let notes=[],chart=[],noteIndex=0,hitRatings=[];
 let score=0,combo=0,totalHits=0,totalPerfect=0,noteSpeed=300,gameRunning=false,lastTime=0;
 let introBPM = 140;
 
+let hitScores = []; // <-- nuovo array per rank
+
 function resizeCanvas(){
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -213,6 +215,7 @@ function startGame(){
     notes=[]; chart=[]; noteIndex=0;
     score=0; combo=0; totalHits=0; totalPerfect=0;
     noteSpeed=currentSong.speed;
+    hitScores = [];
     bgm.src=currentSong.mp3; bgm.currentTime=0;
     bgm.volume=document.getElementById("volumeSlider").value;
     bgm.onloadedmetadata=()=>{
@@ -224,7 +227,7 @@ function startGame(){
     }
 }
 
-// --- Key hits ---
+// --- Key hits e calcolo rank corretto ---
 document.addEventListener("keydown",e=>{
     if(!gameRunning)return;
     const hitWindowTop = canvas.height - 120;
@@ -235,13 +238,16 @@ document.addEventListener("keydown",e=>{
         if(e.key.toUpperCase() === expectedKey && note.y >= hitWindowTop && note.y <= hitWindowBottom){
             note.hit = true; combo++; totalHits++;
             const dist = Math.abs(note.y - (canvas.height - 70));
-            if(dist < 15) totalPerfect++;  
-            score += 100 * (1 + combo*0.05);
             let rating = "MEH";
-            if(dist < 10) rating="PERFECT";
-            else if(dist < 20) rating="SICK";
-            else if(dist < 35) rating="AWESOME";
-            else rating="NICE";
+            let scoreMultiplier = 0.5;
+            if(dist < 10){ rating="PERFECT"; scoreMultiplier=1.0; totalPerfect++; }
+            else if(dist < 20){ rating="SICK"; scoreMultiplier=0.9; }
+            else if(dist < 35){ rating="AWESOME"; scoreMultiplier=0.8; }
+            else if(dist < 50){ rating="NICE"; scoreMultiplier=0.7; }
+
+            score += 100 * (1 + combo*0.05);
+            hitScores.push(scoreMultiplier); // <-- registriamo tutti i colpi
+
             const img=new Image();
             img.src=rating+".png";
             hitRatings.push({img:img,x:arrowZoneOffset+note.column*columnWidth+columnWidth/2,y:canvas.height-120,alpha:1});
@@ -249,10 +255,10 @@ document.addEventListener("keydown",e=>{
     }
 });
 
-// --- Rank calcolo ---
+// --- Rank calcolo corretto ---
 function calculateRank(){
-    if(totalHits===0) return "F";
-    const accuracy = totalPerfect/totalHits;
+    if(hitScores.length === 0) return "F";
+    const accuracy = hitScores.reduce((a,b)=>a+b,0)/hitScores.length;
     if(accuracy>=0.90) return "S";
     if(accuracy>=0.80) return "A";
     if(accuracy>=0.65) return "B";
@@ -297,6 +303,7 @@ function gameLoop(timestamp){
             note.hit = true;
             combo = 0;
             totalHits++;
+            hitScores.push(0); // MISS pesa 0
             const img=new Image();
             img.src = "MISS.png";
             hitRatings.push({img:img,x:arrowZoneOffset+note.column*columnWidth+columnWidth/2,y:missThreshold,alpha:1});
