@@ -21,10 +21,6 @@ body{margin:0;overflow:hidden;background:black;font-family:Arial;color:white;}
 #tabContent{margin-top:10px;}
 #keySettings td{border:1px solid rgba(255,255,255,0.3);padding:8px 15px;text-align:center;cursor:pointer;color:white;font-weight:bold;}
 #keySettings td:hover{background:rgba(255,255,255,0.2);}
-#songList{max-height:300px;overflow-y:auto;width:200px;margin-top:10px;}
-#songList div{padding:8px;cursor:pointer;}
-#songList div:hover{background:rgba(255,255,255,0.2);}
-#songList div.selected{background:rgba(255,255,255,0.5);}
 </style>
 </head>
 <body>
@@ -34,8 +30,12 @@ body{margin:0;overflow:hidden;background:black;font-family:Arial;color:white;}
 <img id="logo" src="Risorsa_1sinny.png" alt="Logo">
 <h1 id="songTitle">BIRDBRAIN</h1>
 <div id="difficulty"></div>
+<select id="songSelector2">
+<option value="BIRDBRAIN">BIRDBRAIN</option>
+<option value="Mesmerizer">MESMERIZER</option>
+<option value="ECHO">ECHO</option>
+</select>
 <button id="settingsBtn">IMPOSTAZIONI</button>
-<div id="songList"></div>
 </div>
 
 <div id="settingsPanel">
@@ -55,11 +55,12 @@ body{margin:0;overflow:hidden;background:black;font-family:Arial;color:white;}
 <div style="margin-top:10px;">Volume: <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.5"></div>
 </div>
 <div id="tabSongs" style="display:none;">
-<select id="songSelector2">
+<select id="songSelector2Tab">
 <option value="BIRDBRAIN">BIRDBRAIN</option>
 <option value="Mesmerizer">MESMERIZER</option>
 <option value="ECHO">ECHO</option>
 </select>
+<p>Fai doppio click sulla canzone per partire</p>
 </div>
 </div>
 </div>
@@ -68,7 +69,6 @@ body{margin:0;overflow:hidden;background:black;font-family:Arial;color:white;}
 <div id="score">Punti: 0</div>
 <div id="combo">Combo: 0x</div>
 <div id="rank">Rank: F</div>
-
 <audio id="bgm"></audio>
 <audio id="bgmMenu" loop></audio>
 
@@ -79,7 +79,7 @@ const ctx=canvas.getContext("2d");
 
 let columns = 4;
 let arrowZoneWidth, columnWidth, arrowZoneOffset;
-let columnKeys=[]; 
+let columnKeys=[];
 const columnColors=[];
 let hitLineHeight = 25;
 
@@ -92,9 +92,16 @@ const bgImg=document.getElementById("bgImg");
 const scoreDisplay=document.getElementById("score");
 const comboDisplay=document.getElementById("combo");
 const rankDisplay=document.getElementById("rank");
+
+const selector2=document.getElementById("songSelector2");
 const introScreen=document.getElementById("introScreen");
+const settingsBtn=document.getElementById("settingsBtn");
+const settingsPanel=document.getElementById("settingsPanel");
+const tabKeysBtn=document.getElementById("tabKeysBtn");
+const tabSongsBtn=document.getElementById("tabSongsBtn");
+const tabKeys=document.getElementById("tabKeys");
+const tabSongs=document.getElementById("tabSongs");
 const logo=document.getElementById("logo");
-const songListDiv=document.getElementById("songList");
 
 const songs={
 "BIRDBRAIN":{mp3:"BIRDBRAIN.mp3",BPM:140,difficulty:"MEDIO",color:"yellow",speed:300,bg:"immagine_2026-03-03_204259655.png"},
@@ -141,139 +148,187 @@ function drawKeyLabels(){
     for(let i=columns;i<5;i++){ let label=document.getElementById("label"+i); if(label) label.style.display="none"; }
 }
 
-// --- Logo fluttuante ---
-let introTime=0,lastIntroTime=0;
-function animateLogo(delta){
-    introTime += delta;
-    const amplitude = 5; // più leggero
-    const period = 2; // secondi
-    const yOffset = amplitude*Math.sin((introTime/period)*2*Math.PI);
-    logo.style.transform = `translateY(${yOffset}px)`;
-}
-function introLoop(timestamp){
-    const delta = (timestamp - lastIntroTime)/1000 || 0;
-    lastIntroTime = timestamp;
-    animateLogo(delta);
-    requestAnimationFrame(introLoop);
-}
-requestAnimationFrame(introLoop);
-
-// --- Popola lista canzoni ---
-function populateSongList(){
-    songListDiv.innerHTML="";
-    for(let name in songs){
-        const div = document.createElement("div");
-        div.innerText = name;
-        div.onclick = ()=>{ selectSong(name); };
-        div.ondblclick = ()=>{ startGame(); };
-        songListDiv.appendChild(div);
-    }
-}
-function selectSong(name){
-    currentSong = songs[name];
-    document.getElementById("songTitle").innerText=name;
+function updateSongUI(){
+    document.getElementById("songTitle").innerText=selector2.value;
     document.getElementById("difficulty").innerText=currentSong.difficulty.toUpperCase();
     document.getElementById("difficulty").style.color=currentSong.color;
     updateColumns();
     updateColumnKeys();
     drawKeyLabels();
-    // evidenzia selezione
-    [...songListDiv.children].forEach(c=>c.classList.remove("selected"));
-    [...songListDiv.children].find(c=>c.innerText===name).classList.add("selected");
+    introBPM = currentSong.BPM;
 }
-populateSongList();
-selectSong("BIRDBRAIN");
+updateSongUI();
 
-// --- Start Game ---
+settingsBtn.onclick=()=>{settingsPanel.style.display = settingsPanel.style.display==="none"?"block":"none";}
+tabKeysBtn.onclick=()=>{tabKeys.style.display="block"; tabSongs.style.display="none";}
+tabSongsBtn.onclick=()=>{tabKeys.style.display="none"; tabSongs.style.display="block";}
+document.getElementById("volumeSlider").oninput=function(){bgm.volume=this.value;};
+
+// --- Logo fluttuante ---
+let introTime=0;
+function animateLogo(delta){
+    introTime += delta;
+    const y = Math.sin(introTime*2*Math.PI/5)*10; // fluttua ±10px lentamente
+    logo.style.transform = `translateY(${y}px)`;
+}
+let lastIntroTime=0;
+function introLoop(timestamp){
+    const delta = (timestamp-lastIntroTime)/1000 || 0;
+    lastIntroTime=timestamp;
+    animateLogo(delta);
+    requestAnimationFrame(introLoop);
+}
+requestAnimationFrame(introLoop);
+
+// --- Doppio click per partire ---
+document.getElementById("songSelector2").ondblclick = () => {
+    currentSong = songs[selector2.value];
+    updateSongUI();
+    bgImg.src=currentSong.bg;
+    bgImg.style.opacity=1;
+    startChart();
+};
+
 function generateFullChart(){
     chart=[];
     const beat=60/currentSong.BPM;
     const duration=bgm.duration||120;
-    let t=beat;
-    while(t<duration){
-        let randOffset = (Math.random()-0.5)*0.1; // piccola casualità
+    for(let t=beat; t<duration; t+=beat){
+        const offset = (Math.random()-0.5)*0.15; // distanza leggermente random
         if(currentSong===songs["ECHO"]){
             let col=Math.floor(Math.random()*5);
-            chart.push({time:t+randOffset,column:col});
+            chart.push({time:t+offset,column:col});
         }else{
-            chart.push({time:t+randOffset,column:Math.floor(columns*Math.random())});
+            chart.push({time:t+offset,column:Math.floor(4*Math.random())});
         }
-        t += beat;
     }
 }
 
-function startGame(){
+function startChart(){
     notes=[]; chart=[]; noteIndex=0;
     score=0; combo=0; totalHits=0; totalPerfect=0;
     noteSpeed=currentSong.speed; hitScores=[];
-    bgImg.src=currentSong.bg; 
-    bgImg.style.opacity=1;
-    bgm.src=currentSong.mp3;
-    bgm.currentTime=0;
+    bgm.src=currentSong.mp3; bgm.currentTime=0;
     bgm.volume=document.getElementById("volumeSlider").value;
     bgm.onloadedmetadata=()=>{
         generateFullChart();
-        gameRunning=true;
-        lastTime=0;
+        gameRunning=true; lastTime=0;
         requestAnimationFrame(gameLoop);
-        bgm.play();
-    }
+        bgm.play().catch(e=>console.log("Autoplay bloccato"));
+    };
 }
 
-// --- Disegna barre e note ---
-function drawColumns(){
-    for(let i=0;i<=columns;i++){
-        ctx.strokeStyle="rgba(255,255,255,0.2)";
-        ctx.beginPath();
-        ctx.moveTo(arrowZoneOffset + i*columnWidth,0);
-        ctx.lineTo(arrowZoneOffset + i*columnWidth,canvas.height);
-        ctx.stroke();
-    }
-}
-function drawNotes(){
-    ctx.globalAlpha=1;
+// --- Key hits e rating ---
+document.addEventListener("keydown",e=>{
+    if(!gameRunning)return;
+    const hitWindowTop = canvas.height - 120;
+    const hitWindowBottom = canvas.height - 20;
     for(let note of notes){
-        if(note.hit) continue;
-        ctx.fillStyle=columnColors[note.column];
-        const size = 50;
-        const x = arrowZoneOffset + note.column*columnWidth + columnWidth/2;
-        const y = note.y;
-        ctx.beginPath();
-        ctx.moveTo(x, y - size/2);
-        ctx.lineTo(x - size/2, y + size/2);
-        ctx.lineTo(x + size/2, y + size/2);
-        ctx.closePath();
-        ctx.fill();
-        note.y += noteSpeed*(1/60);
+        if(note.hit)continue;
+        let expectedKey = columnKeys[note.column];
+        if(e.key.toUpperCase() === expectedKey && note.y >= hitWindowTop && note.y <= hitWindowBottom){
+            note.hit=true; combo++; totalHits++;
+            const dist=Math.abs(note.y-(canvas.height-70));
+            let rating="MEH",scoreMultiplier=0.5;
+            if(dist<10){rating="PERFECT";scoreMultiplier=1;totalPerfect++;}
+            else if(dist<20){rating="SICK";scoreMultiplier=0.9;}
+            else if(dist<35){rating="AWESOME";scoreMultiplier=0.8;}
+            else if(dist<50){rating="NICE";scoreMultiplier=0.7;}
+            score += 100*(1+combo*0.05);
+            hitScores.push(scoreMultiplier);
+            const img=new Image(); img.src=rating+".png";
+            hitRatings.push({img:img,x:arrowZoneOffset+note.column*columnWidth+columnWidth/2,y:canvas.height-120,alpha:1});
+        }
     }
+});
+
+function calculateRank(){
+    if(hitScores.length===0) return "F";
+    const accuracy = hitScores.reduce((a,b)=>a+b,0)/hitScores.length;
+    if(accuracy>=0.9)return"S";
+    if(accuracy>=0.8)return"A";
+    if(accuracy>=0.65)return"B";
+    if(accuracy>=0.5)return"C";
+    return"F";
 }
 
-// --- Game Loop ---
+// --- Game loop ---
 function spawnNotes(time){
-    while(noteIndex<chart.length && chart[noteIndex].time <= time + 0.1){
+    while(noteIndex<chart.length && chart[noteIndex].time <= time+0.1){
         if(chart[noteIndex].time>0) notes.push({y:-50,column:chart[noteIndex].column,hit:false});
         noteIndex++;
     }
 }
+function drawColumns(){
+    for(let i=0;i<=columns;i++){
+        ctx.strokeStyle="rgba(255,255,255,0.2)";
+        ctx.beginPath();
+        ctx.moveTo(arrowZoneOffset+i*columnWidth,0);
+        ctx.lineTo(arrowZoneOffset+i*columnWidth,canvas.height);
+        ctx.stroke();
+    }
+}
+function drawNoteTriangle(note){
+    const size=40; // più grandi
+    const x=arrowZoneOffset+note.column*columnWidth+columnWidth/2;
+    const y=note.y;
+    ctx.fillStyle=columnColors[note.column];
+    ctx.beginPath();
+    switch(columnKeys[note.column]){
+        case "D": ctx.moveTo(x+size/2,y); ctx.lineTo(x-size/2,y-size/2); ctx.lineTo(x-size/2,y+size/2); break;
+        case "F": ctx.moveTo(x,y-size/2); ctx.lineTo(x+size/2,y+size/2); ctx.lineTo(x-size/2,y+size/2); break;
+        case "J": ctx.moveTo(x,y+size/2); ctx.lineTo(x+size/2,y-size/2); ctx.lineTo(x-size/2,y-size/2); break;
+        case "K": ctx.moveTo(x+size/2,y); ctx.lineTo(x-size/2,y-size/2); ctx.lineTo(x-size/2,y+size/2); break;
+        case "H": ctx.moveTo(x,y-size/2); ctx.lineTo(x+size/2,y); ctx.lineTo(x,y+size/2); ctx.lineTo(x-size/2,y); break;
+    }
+    ctx.closePath();
+    ctx.fill();
+}
+
 function gameLoop(timestamp){
     if(!gameRunning) return;
     const delta=(timestamp-lastTime)/1000;
     lastTime=timestamp;
+    updateNoteColors();
+    spawnNotes(bgm.currentTime);
     ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // Barra di riferimento
+    ctx.fillStyle="rgba(255,255,255,0.2)";
+    ctx.fillRect(arrowZoneOffset, canvas.height-70-hitLineHeight/2, arrowZoneWidth, hitLineHeight);
+
     drawColumns();
     drawKeyLabels();
-    drawNotes();
-    spawnNotes(bgm.currentTime);
 
+    const missThreshold = canvas.height-20;
+    for(let note of notes){
+        if(note.hit) continue;
+        note.y += noteSpeed*delta;
+        drawNoteTriangle(note);
+        if(note.y>missThreshold){
+            note.hit=true; combo=0; totalHits++;
+            hitScores.push(0);
+            const img=new Image(); img.src="MISS.png";
+            hitRatings.push({img:img,x:arrowZoneOffset+note.column*columnWidth+columnWidth/2,y:missThreshold,alpha:1});
+        }
+    }
+
+    for(let i=hitRatings.length-1;i>=0;i--){
+        const r=hitRatings[i];
+        ctx.globalAlpha=r.alpha;
+        ctx.drawImage(r.img,r.x-50,r.y-25,100,50);
+        r.y-=1; r.alpha-=0.02;
+        if(r.alpha<=0) hitRatings.splice(i,1);
+    }
+    ctx.globalAlpha=1;
     scoreDisplay.innerText="Punti: "+Math.floor(score);
     comboDisplay.innerText="Combo: "+combo+"x";
-    rankDisplay.innerText="Rank: F";
-
+    rankDisplay.innerText="Rank: "+calculateRank();
     requestAnimationFrame(gameLoop);
 }
 
-// --- Autoplay menu al click ---
-document.body.addEventListener("click", ()=>{ bgmMenu.play().catch(e=>console.log("Autoplay bloccato")); }, { once: true });
+// --- Menu music autoplay al primo click ---
+document.body.addEventListener("click", ()=>{ bgmMenu.play().catch(e=>console.log("Autoplay bloccato")); }, { once:true });
 
 };
 </script>
