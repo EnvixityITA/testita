@@ -21,7 +21,8 @@ body{margin:0;overflow:hidden;background:black;font-family:Arial;color:white;}
 #tabContent{margin-top:10px;}
 #keySettings td{border:1px solid rgba(255,255,255,0.3);padding:8px 15px;text-align:center;cursor:pointer;color:white;font-weight:bold;}
 #keySettings td:hover{background:rgba(255,255,255,0.2);}
-#songSelector2{width:100%;margin-top:10px;font-size:16px;}
+#tabSongs{max-height:200px; overflow-y:auto; display:block;}
+#songSelector2{width:100%; font-size:16px; height:100px;}
 </style>
 </head>
 <body>
@@ -50,7 +51,7 @@ body{margin:0;overflow:hidden;background:black;font-family:Arial;color:white;}
 </tr></table>
 <div style="margin-top:10px;">Volume: <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.5"></div>
 </div>
-<div id="tabSongs" style="display:none;">
+<div id="tabSongs">
 <select id="songSelector2" size="5">
 <option value="BIRDBRAIN">BIRDBRAIN</option>
 <option value="Mesmerizer">MESMERIZER</option>
@@ -64,7 +65,6 @@ body{margin:0;overflow:hidden;background:black;font-family:Arial;color:white;}
 <div id="score">Punti: 0</div>
 <div id="combo">Combo: 0x</div>
 <div id="rank">Rank: F</div>
-
 <audio id="bgm"></audio>
 <audio id="bgmMenu" loop></audio>
 
@@ -75,13 +75,13 @@ const ctx=canvas.getContext("2d");
 
 let columns = 4;
 let arrowZoneWidth, columnWidth, arrowZoneOffset;
-let columnKeys=[];
+let columnKeys=[]; 
 const columnColors=[];
 let hitLineHeight = 25;
 
 const bgm=document.getElementById("bgm");
 const bgmMenu=document.getElementById("bgmMenu");
-bgmMenu.src="menu_bgm.mp3";
+bgmMenu.src="menu_bgm.mp3"; 
 bgmMenu.volume=0.5;
 
 const bgImg=document.getElementById("bgImg");
@@ -145,7 +145,7 @@ function drawKeyLabels(){
 }
 
 function updateSongUI(){
-    document.getElementById("songTitle").innerText=currentSong.difficulty.toUpperCase();
+    document.getElementById("songTitle").innerText=selector2.value;
     document.getElementById("difficulty").innerText=currentSong.difficulty.toUpperCase();
     document.getElementById("difficulty").style.color=currentSong.color;
     updateColumns();
@@ -154,45 +154,42 @@ function updateSongUI(){
     introBPM = currentSong.BPM;
 }
 
-// --- Settings Tabs ---
-settingsBtn.onclick=()=>{settingsPanel.style.display = settingsPanel.style.display==="none"?"block":"none";}
-tabKeysBtn.onclick=()=>{tabKeys.style.display="block"; tabSongs.style.display="none";}
-tabSongsBtn.onclick=()=>{tabKeys.style.display="none"; tabSongs.style.display="block";}
-document.getElementById("volumeSlider").oninput=function(){bgm.volume=this.value;};
-
 // --- Logo fluttuante ---
-let introBeatTime=0, lastIntroTime=0;
-function animateLogoBeat(delta){
-    introBeatTime += delta;
-    const phase = introBeatTime * 2 * Math.PI * 0.2; // più lento
-    const y = 10 * Math.sin(phase);
-    logo.style.transform = `translateY(${y}px)`;
+let floatTime=0;
+function animateLogo(delta){
+    floatTime += delta;
+    const yOffset = Math.sin(floatTime*2*Math.PI/2)*10; // ±10px, lento
+    logo.style.transform = `translateY(${yOffset}px)`;
 }
-function introLoop(timestamp){
-    const delta = (timestamp - lastIntroTime)/1000 || 0;
-    lastIntroTime = timestamp;
-    animateLogoBeat(delta);
-    requestAnimationFrame(introLoop);
+let lastLogoTime=0;
+function logoLoop(timestamp){
+    const delta=(timestamp-lastLogoTime)/1000||0;
+    lastLogoTime=timestamp;
+    animateLogo(delta);
+    requestAnimationFrame(logoLoop);
 }
-requestAnimationFrame(introLoop);
+requestAnimationFrame(logoLoop);
 
-// --- Chart & game logic ---
+// --- Chart ---
 function generateFullChart(){
     chart=[];
     const beat=60/currentSong.BPM;
-    const duration=bgm.duration||60;
+    const duration=bgm.duration||120;
     for(let t=beat; t<duration; t+=beat){
-        let offset = (Math.random()-0.5)*0.1; // piccola variazione
-        if(currentSong===songs["ECHO"]){
-            for(let i=0;i<5;i++){ chart.push({time:t+offset,column:i}); }
-        } else chart.push({time:t+offset,column:Math.floor(columns*Math.random())});
+        let col=Math.floor(columns*Math.random());
+        chart.push({time:t + (Math.random()*0.05-0.025),column:col}); // piccola randomizzazione distanza
     }
 }
 
+// Avvia chart
 function startChart(){
     notes=[]; chart=[]; noteIndex=0;
-    score=0; combo=0; totalHits=0; totalPerfect=0; noteSpeed=currentSong.speed; hitScores=[];
-    bgm.src=currentSong.mp3; bgm.currentTime=0; bgm.volume=document.getElementById("volumeSlider").value;
+    score=0; combo=0; totalHits=0; totalPerfect=0;
+    noteSpeed=currentSong.speed;
+    hitScores = [];
+    bgm.src=currentSong.mp3; 
+    bgm.currentTime=0;
+    bgm.volume=document.getElementById("volumeSlider").value;
     bgm.onloadedmetadata=()=>{
         generateFullChart();
         gameRunning=true;
@@ -202,16 +199,16 @@ function startChart(){
     }
 }
 
-// --- Doppio click per selezione canzone ---
-document.querySelectorAll('#songSelector2 option').forEach(option => {
-    option.ondblclick = () => {
-        currentSong = songs[option.value];
-        updateSongUI();
-        bgImg.src = currentSong.bg;
-        bgImg.style.opacity = 1;
-        startChart();
-    };
+// --- Song selection ---
+// singolo click: selezione
+selector2.addEventListener("click", () => {
+    currentSong = songs[selector2.value];
+    updateSongUI();
+    bgImg.src = currentSong.bg;
+    bgImg.style.opacity = 1;
 });
+// doppio click: avvia chart
+selector2.addEventListener("dblclick", startChart);
 
 // --- Key hits e rank ---
 document.addEventListener("keydown",e=>{
@@ -224,9 +221,17 @@ document.addEventListener("keydown",e=>{
         if(e.key.toUpperCase() === expectedKey && note.y >= hitWindowTop && note.y <= hitWindowBottom){
             note.hit = true; combo++; totalHits++;
             const dist = Math.abs(note.y - (canvas.height - 70));
-            let scoreMultiplier = 1;
+            let rating = "MEH";
+            let scoreMultiplier = 0.5;
+            if(dist < 10){ rating="PERFECT"; scoreMultiplier=1.0; totalPerfect++; }
+            else if(dist < 20){ rating="SICK"; scoreMultiplier=0.9; }
+            else if(dist < 35){ rating="AWESOME"; scoreMultiplier=0.8; }
+            else if(dist < 50){ rating="NICE"; scoreMultiplier=0.7; }
             score += 100 * (1 + combo*0.05);
             hitScores.push(scoreMultiplier);
+            const img=new Image();
+            img.src=rating+".png";
+            hitRatings.push({img:img,x:arrowZoneOffset+note.column*columnWidth+columnWidth/2,y:canvas.height-120,alpha:1});
         }
     }
 });
@@ -244,11 +249,10 @@ function calculateRank(){
 // --- Game loop ---
 function spawnNotes(time){
     while(noteIndex<chart.length && chart[noteIndex].time <= time + 0.1){ 
-        notes.push({y:-50,column:chart[noteIndex].column,hit:false});
+        if(chart[noteIndex].time>0) notes.push({y:-50,column:chart[noteIndex].column,hit:false});
         noteIndex++;
     }
 }
-
 function drawColumns(){
     for(let i=0;i<=columns;i++){
         ctx.strokeStyle="rgba(255,255,255,0.2)";
@@ -259,32 +263,68 @@ function drawColumns(){
     }
 }
 
-function drawNotes(){
-    const size = 40;
+function drawTriangles(){
     for(let note of notes){
         if(note.hit)continue;
-        const x = arrowZoneOffset+note.column*columnWidth+columnWidth/2;
-        const y = note.y;
-        ctx.fillStyle=columnColors[note.column];
+        const centerX = arrowZoneOffset + note.column*columnWidth + columnWidth/2;
+        const size = 30; // più grandi
+        ctx.fillStyle = columnColors[note.column];
+        ctx.globalAlpha=1;
         ctx.beginPath();
-        ctx.moveTo(x, y - size/2);
-        ctx.lineTo(x - size/2, y + size/2);
-        ctx.lineTo(x + size/2, y + size/2);
+        switch(columnKeys[note.column]){
+            case "D": // left
+                ctx.moveTo(centerX-size, note.y);
+                ctx.lineTo(centerX+size, note.y-size);
+                ctx.lineTo(centerX+size, note.y+size);
+                break;
+            case "F": // up
+                ctx.moveTo(centerX, note.y-size);
+                ctx.lineTo(centerX-size, note.y+size);
+                ctx.lineTo(centerX+size, note.y+size);
+                break;
+            case "J": // down
+                ctx.moveTo(centerX, note.y+size);
+                ctx.lineTo(centerX-size, note.y-size);
+                ctx.lineTo(centerX+size, note.y-size);
+                break;
+            case "K": // right
+                ctx.moveTo(centerX+size, note.y);
+                ctx.lineTo(centerX-size, note.y-size);
+                ctx.lineTo(centerX-size, note.y+size);
+                break;
+            case "H": // diamond
+                ctx.moveTo(centerX, note.y-size);
+                ctx.lineTo(centerX-size, note.y);
+                ctx.lineTo(centerX, note.y+size);
+                ctx.lineTo(centerX+size, note.y);
+                break;
+        }
         ctx.closePath();
         ctx.fill();
-        note.y += noteSpeed/60;
     }
 }
 
-function gameLoop(){
+function gameLoop(timestamp){
     if(!gameRunning)return;
+    const delta=(timestamp-lastTime)/1000;
+    lastTime=timestamp;
+    updateNoteColors();
+    spawnNotes(bgm.currentTime);
     ctx.clearRect(0,0,canvas.width,canvas.height);
+    // barra di riferimento
     ctx.fillStyle="rgba(255,255,255,0.2)";
     ctx.fillRect(arrowZoneOffset, canvas.height-70-hitLineHeight/2, arrowZoneWidth, hitLineHeight);
     drawColumns();
     drawKeyLabels();
-    spawnNotes(bgm.currentTime);
-    drawNotes();
+    drawTriangles();
+    for(let i=hitRatings.length-1;i>=0;i--){
+        const r=hitRatings[i];
+        ctx.globalAlpha=r.alpha;
+        ctx.drawImage(r.img,r.x-50,r.y-25,100,50);
+        r.y-=1; r.alpha-=0.02;
+        if(r.alpha<=0) hitRatings.splice(i,1);
+    }
+    ctx.globalAlpha=1;
     scoreDisplay.innerText="Punti: "+Math.floor(score);
     comboDisplay.innerText="Combo: "+combo+"x";
     rankDisplay.innerText="Rank: "+calculateRank();
@@ -296,8 +336,13 @@ document.body.addEventListener("click", ()=>{
     bgmMenu.play().catch(e=>console.log("Autoplay bloccato"));
 }, { once: true });
 
+// --- Settings tab switch ---
+tabKeysBtn.onclick=()=>{tabKeys.style.display="block"; tabSongs.style.display="none";}
+tabSongsBtn.onclick=()=>{tabKeys.style.display="none"; tabSongs.style.display="block";}
+document.getElementById("volumeSlider").oninput=function(){bgm.volume=this.value;};
+
+updateSongUI();
 };
 </script>
-
 </body>
 </html>
