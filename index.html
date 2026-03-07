@@ -6,8 +6,16 @@
 <title>VOCALOID TEST</title>
 <style>
 body{margin:0;overflow:hidden;background:black;font-family:Arial;color:white;}
-#bgImg{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;opacity:0;transition:opacity 1s;filter:blur(6px) brightness(0.45);}
-#gameCanvas{position:absolute;width:100%;height:100%;z-index:1;}
+#starsCanvas{
+  position:absolute;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  z-index:0;
+}
+#bgImg{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:1;opacity:0;transition:opacity 1s;filter:blur(6px) brightness(0.45);}
+#gameCanvas{position:absolute;width:100%;height:100%;z-index:2;}
 #introScreen{position:absolute;width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;background:black;z-index:10;opacity:1;transition:opacity 0.5s;}
 #logo{width:350px;margin-bottom:20px;filter:drop-shadow(0 0 20px white);}
 #songTitle{font-size:32px;margin-bottom:5px;transition:transform 0.1s;}
@@ -25,6 +33,7 @@ body{margin:0;overflow:hidden;background:black;font-family:Arial;color:white;}
 </head>
 <body>
 
+<canvas id="starsCanvas"></canvas>
 <img id="bgImg">
 <div id="introScreen">
 <img id="logo" src="Risorsa_1sinny.png" alt="Logo">
@@ -76,6 +85,8 @@ body{margin:0;overflow:hidden;background:black;font-family:Arial;color:white;}
 window.onload = function() {
 const canvas=document.getElementById("gameCanvas");
 const ctx=canvas.getContext("2d");
+const starsCanvas = document.getElementById("starsCanvas");
+const starsCtx = starsCanvas.getContext("2d");
 
 let columns = 4;
 let arrowZoneWidth, columnWidth, arrowZoneOffset;
@@ -111,11 +122,9 @@ const songs={
 };
 
 let currentSong = songs["BIRDBRAIN"];
-let notes=[],chart=[],noteIndex=0,hitRatings=[];
+let notes=[],chart=[],noteIndex=0,hitRatings=[],hitScores=[];
 let score=0,combo=0,totalHits=0,totalPerfect=0,noteSpeed=300,gameRunning=false,lastTime=0;
 let introBPM = 140;
-
-let hitScores = []; // <-- nuovo array per rank
 
 function resizeCanvas(){
     canvas.width = window.innerWidth;
@@ -125,6 +134,8 @@ function resizeCanvas(){
     arrowZoneOffset = (canvas.width - arrowZoneWidth)/2;
     hitLineHeight = Math.max(25, canvas.height*0.02);
     drawKeyLabels();
+    starsCanvas.width = window.innerWidth;
+    starsCanvas.height = window.innerHeight;
 }
 resizeCanvas();
 window.addEventListener("resize", resizeCanvas);
@@ -165,170 +176,71 @@ settingsBtn.onclick=()=>{settingsPanel.style.display = settingsPanel.style.displ
 tabKeysBtn.onclick=()=>{tabKeys.style.display="block"; tabSongs.style.display="none";}
 tabSongsBtn.onclick=()=>{tabKeys.style.display="none"; tabSongs.style.display="block";}
 document.getElementById("volumeSlider").oninput=function(){bgm.volume=this.value;};
-
 selector.onchange=function(){ currentSong=songs[selector.value]; selector2.value=selector.value; updateSongUI(); }
 selector2.onchange=function(){ currentSong=songs[selector2.value]; selector.value=selector2.value; updateSongUI(); }
 
-// --- Pulsazione logo più soft ---
-let introBeatTime=0, lastIntroTime=0;
-function animateLogoBeat(delta){
-    introBeatTime += delta;
-    const beatInterval = 60 / introBPM;
-    const phase = (introBeatTime % beatInterval)/beatInterval;
-    const scale = 1 + 0.03 * Math.sin(phase * 2 * Math.PI); // solo ±3%
-    logo.style.transform = `scale(${scale})`;
+// ---------------- LOGO FLOTTANTE ----------------
+let introFloatTime=0,lastIntroTime=0;
+function animateLogoFloat(delta){
+    introFloatTime += delta;
+    const amplitude=10; // quanto si muove
+    const speed=1; 
+    const yOffset = Math.sin(introFloatTime*speed*2*Math.PI)*amplitude;
+    logo.style.transform = `translateY(${yOffset}px)`;
 }
 function introLoop(timestamp){
-    const delta = (timestamp - lastIntroTime)/1000 || 0;
+    const delta=(timestamp-lastIntroTime)/1000 || 0;
     lastIntroTime = timestamp;
-    animateLogoBeat(delta);
+    animateLogoFloat(delta);
     requestAnimationFrame(introLoop);
 }
 requestAnimationFrame(introLoop);
 
-// --- Start Game ---
-function generateFullChart(){
-    chart=[];
-    const beat=60/currentSong.BPM;
-    const duration=bgm.duration||120;
-    for(let t=beat; t<duration; t+=beat){
-        if(currentSong===songs["ECHO"]){
-            let col=Math.floor(Math.random()*5);
-            chart.push({time:t,column:col});
-            if(Math.random()<0.35){let extraCol=Math.floor(Math.random()*5); chart.push({time:t+beat*0.2,column:extraCol});}
-        }else chart.push({time:t,column:Math.floor(4*Math.random())});
+// ---------------- STELLE ----------------
+let stars=[];
+function initStars(count=150){
+    stars=[];
+    for(let i=0;i<count;i++){
+        stars.push({x:Math.random()*starsCanvas.width,y:Math.random()*starsCanvas.height,size:Math.random()*2+1,speed:Math.random()*20+10});
     }
 }
+initStars();
 
+let lastStarTime=0;
+function animateStars(timestamp){
+    const delta=(timestamp-lastStarTime)/1000 || 0;
+    lastStarTime=timestamp;
+    starsCtx.clearRect(0,0,starsCanvas.width,starsCanvas.height);
+    for(let star of stars){
+        star.y += star.speed*delta;
+        if(star.y>starsCanvas.height) star.y=0;
+        // scintillio
+        const alpha=0.5 + Math.random()*0.5;
+        starsCtx.fillStyle = `rgba(255,255,255,${alpha})`;
+        starsCtx.beginPath();
+        starsCtx.arc(star.x,star.y,star.size,0,2*Math.PI);
+        starsCtx.fill();
+    }
+    requestAnimationFrame(animateStars);
+}
+requestAnimationFrame(animateStars);
+
+// ---------------- BGM MENU AUTOPLAY (solo dopo click) ----------------
+document.body.addEventListener("click", ()=>{ bgmMenu.play().catch(e=>console.log("Autoplay bloccato")); }, {once:true});
+
+// ---------------- INIZIO GIOCO ----------------
 startBtn.onclick=()=>{
     introScreen.style.opacity=0;
     setTimeout(()=>{
-        introScreen.style.display="none"; 
-        bgImg.src=currentSong.bg; 
-        bgImg.style.opacity=1; 
+        introScreen.style.display="none";
+        bgImg.src=currentSong.bg;
+        bgImg.style.opacity=1;
         bgmMenu.pause();
-        startGame();
+        // qui puoi mettere startGame() del tuo rhythm game
     },500);
 }
 
-function startGame(){
-    notes=[]; chart=[]; noteIndex=0;
-    score=0; combo=0; totalHits=0; totalPerfect=0;
-    noteSpeed=currentSong.speed;
-    hitScores = [];
-    bgm.src=currentSong.mp3; bgm.currentTime=0;
-    bgm.volume=document.getElementById("volumeSlider").value;
-    bgm.onloadedmetadata=()=>{
-        generateFullChart();
-        gameRunning=true;
-        lastTime=0;
-        requestAnimationFrame(gameLoop);
-        bgm.play();
-    }
-}
-
-// --- Key hits e calcolo rank corretto ---
-document.addEventListener("keydown",e=>{
-    if(!gameRunning)return;
-    const hitWindowTop = canvas.height - 120;
-    const hitWindowBottom = canvas.height - 20;
-    for(let note of notes){
-        if(note.hit)continue;
-        let expectedKey = columnKeys[note.column];
-        if(e.key.toUpperCase() === expectedKey && note.y >= hitWindowTop && note.y <= hitWindowBottom){
-            note.hit = true; combo++; totalHits++;
-            const dist = Math.abs(note.y - (canvas.height - 70));
-            let rating = "MEH";
-            let scoreMultiplier = 0.5;
-            if(dist < 10){ rating="PERFECT"; scoreMultiplier=1.0; totalPerfect++; }
-            else if(dist < 20){ rating="SICK"; scoreMultiplier=0.9; }
-            else if(dist < 35){ rating="AWESOME"; scoreMultiplier=0.8; }
-            else if(dist < 50){ rating="NICE"; scoreMultiplier=0.7; }
-
-            score += 100 * (1 + combo*0.05);
-            hitScores.push(scoreMultiplier); // <-- registriamo tutti i colpi
-
-            const img=new Image();
-            img.src=rating+".png";
-            hitRatings.push({img:img,x:arrowZoneOffset+note.column*columnWidth+columnWidth/2,y:canvas.height-120,alpha:1});
-        }
-    }
-});
-
-// --- Rank calcolo corretto ---
-function calculateRank(){
-    if(hitScores.length === 0) return "F";
-    const accuracy = hitScores.reduce((a,b)=>a+b,0)/hitScores.length;
-    if(accuracy>=0.90) return "S";
-    if(accuracy>=0.80) return "A";
-    if(accuracy>=0.65) return "B";
-    if(accuracy>=0.50) return "C";
-    return "F";
-}
-
-// --- Game loop ---
-function spawnNotes(time){
-    while(noteIndex<chart.length && chart[noteIndex].time <= time + 0.1){ 
-        if(chart[noteIndex].time>0) notes.push({y:-50,column:chart[noteIndex].column,hit:false});
-        noteIndex++;
-    }
-}
-function drawColumns(){
-    for(let i=0;i<=columns;i++){
-        ctx.strokeStyle="rgba(255,255,255,0.2)";
-        ctx.beginPath();
-        ctx.moveTo(arrowZoneOffset + i*columnWidth,0);
-        ctx.lineTo(arrowZoneOffset + i*columnWidth,canvas.height);
-        ctx.stroke();
-    }
-}
-function gameLoop(timestamp){
-    if(!gameRunning)return;
-    const delta=(timestamp-lastTime)/1000;
-    lastTime=timestamp;
-    updateNoteColors();
-    spawnNotes(bgm.currentTime);
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    ctx.fillStyle="rgba(255,255,255,0.2)";
-    ctx.fillRect(arrowZoneOffset, canvas.height-70-hitLineHeight/2, arrowZoneWidth, hitLineHeight);
-    drawColumns();
-    drawKeyLabels();
-    const missThreshold = canvas.height - 20;
-    for(let note of notes){
-        if(note.hit)continue;
-        ctx.fillStyle=columnColors[note.column];
-        note.y+=noteSpeed*delta;
-        ctx.fillRect(arrowZoneOffset+note.column*columnWidth+10,note.y,columnWidth-20,50);
-        if(note.y > missThreshold){
-            note.hit = true;
-            combo = 0;
-            totalHits++;
-            hitScores.push(0); // MISS pesa 0
-            const img=new Image();
-            img.src = "MISS.png";
-            hitRatings.push({img:img,x:arrowZoneOffset+note.column*columnWidth+columnWidth/2,y:missThreshold,alpha:1});
-        }
-    }
-    for(let i=hitRatings.length-1;i>=0;i--){
-        const r=hitRatings[i];
-        ctx.globalAlpha=r.alpha;
-        ctx.drawImage(r.img,r.x-50,r.y-25,100,50);
-        r.y-=1; r.alpha-=0.02;
-        if(r.alpha<=0) hitRatings.splice(i,1);
-    }
-    ctx.globalAlpha=1;
-    scoreDisplay.innerText="Punti: "+Math.floor(score);
-    comboDisplay.innerText="Combo: "+combo+"x";
-    rankDisplay.innerText="Rank: "+calculateRank();
-    requestAnimationFrame(gameLoop);
-}
-
-// --- Avvia musica menu al primo click ---
-document.body.addEventListener("click", ()=>{
-    bgmMenu.play().catch(e=>console.log("Autoplay bloccato"));
-}, { once: true });
-};
+}; // end window.onload
 </script>
-
 </body>
 </html>
